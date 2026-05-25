@@ -1,0 +1,69 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>인플 대시보드 / STN Short-form Commerce</title>
+  <meta name="description" content="인플루언서별 어필리에이트 코드, 클릭, 주문, 매출, 수수료 확인 대시보드" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="topbar">
+    <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">STN</span><span>인플 대시보드</span></a>
+    <nav class="nav" aria-label="대시보드 메뉴"><a href="index.html">쇼핑 페이지</a><button class="btn" id="logoutBtn" type="button">로그아웃</button></nav>
+  </header>
+  <main id="main" class="auth-layout">
+    <section id="loginPanel" class="auth-grid" aria-labelledby="login-title">
+      <div class="auth-card">
+        <p class="eyebrow">INFLUENCER PRIVATE LOGIN</p>
+        <h1 id="login-title" class="dash-title">인플루언서 전용 로그인</h1>
+        <p class="hint">각 인플루언서는 본인 ID/PW로 로그인해 본인 코드와 실적만 확인합니다.</p>
+        <label class="field">아이디<input id="loginId" autocomplete="username" placeholder="예: hyeho" /></label>
+        <label class="field">비밀번호<input id="loginPw" type="password" autocomplete="current-password" placeholder="데모 비밀번호 1234" /></label>
+        <button id="loginBtn" class="btn primary" type="button">로그인</button>
+        <p class="hint">관리자 계정: mike / 0806 · 전체 인플루언서 계정은 기본 내장되어 있습니다.</p>
+      </div>
+      <div class="auth-card">
+        <p class="eyebrow">SIGN UP MVP</p>
+        <h2>신규 인플루언서 회원가입 / 코드 생성</h2>
+        <p class="hint">프론트 MVP에서는 브라우저 저장소에 계정이 생성됩니다. 실제 서비스에서는 휴대폰/이메일 인증, 약관동의, 정산계좌 검증이 필요합니다.</p>
+        <label class="field">이름<input id="signupName" placeholder="예: 김스타" /></label>
+        <label class="field">인스타그램 핸들<input id="signupHandle" placeholder="예: star_creator" /></label>
+        <label class="field">아이디<input id="signupId" placeholder="예: star01" /></label>
+        <label class="field">비밀번호<input id="signupPw" type="password" placeholder="4자 이상" /></label>
+        <label class="field">희망 Affiliate 코드<input id="signupCode" placeholder="미입력 시 자동 생성" /></label>
+        <button id="signupBtn" class="btn" type="button">회원가입 및 코드 생성</button>
+      </div>
+    </section>
+    <section id="dashboardPanel" class="hidden" aria-labelledby="dash-title">
+      <div class="dash-head">
+        <div><p class="eyebrow">PRIVATE AFFILIATE DASHBOARD</p><h1 id="dash-title" class="dash-title"><span id="userName">-</span> 님 실적 대시보드</h1><p class="hint">본인 코드 기준의 클릭, 주문, 매출, 예상 수수료만 표시됩니다.</p></div>
+        <div class="code-row"><span class="pill" id="myCode">-</span><button id="copyMyLink" class="btn" type="button">내 판매 링크 복사</button><button id="exportCsv" class="btn" type="button">CSV 다운로드</button></div>
+      </div>
+      <div class="stats" aria-label="실적 요약">
+        <div class="stat"><p>클릭</p><strong id="statClicks">0</strong></div><div class="stat"><p>주문</p><strong id="statOrders">0</strong></div><div class="stat"><p>매출</p><strong id="statRevenue">₩0</strong></div><div class="stat"><p>예상 수수료</p><strong id="statCommission">₩0</strong></div>
+      </div>
+      <div class="dashboard-grid">
+        <article class="dash-card"><h2>내 Affiliate 코드 관리</h2><p class="hint">코드 변경 시 이후 링크부터 새 코드로 추적됩니다.</p><label class="field">새 코드<input id="newCode" placeholder="예: HYEHO2026" /></label><button id="changeCodeBtn" class="btn" type="button">코드 변경/생성</button><div class="notice"><b>내 판매 링크</b><br/><span id="myLinkText"></span></div></article>
+        <article class="dash-card"><h2>최근 이벤트</h2><div class="table-wrap"><table><caption class="sr-only">최근 이벤트 내역</caption><thead><tr><th>일시</th><th>유형</th><th>상품</th><th>금액</th></tr></thead><tbody id="eventRows"></tbody></table></div></article>
+      </div>
+      <section id="adminPanel" class="dash-card hidden" aria-labelledby="admin-title">
+        <h2 id="admin-title">관리자 일괄등록 / 전체 계정 관리</h2>
+        <p class="hint">mike / 0806 관리자 로그인 시 표시됩니다. 전체 인플루언서 계정은 data.js에 기본 내장되어 있어 Netlify 재배포 즉시 로그인 가능합니다. Supabase 연동 후에는 이 패널에서 DB 계정을 관리합니다.</p>
+        <div class="code-row">
+          <button id="seedAccountsBtn" class="btn primary" type="button">전체 계정 브라우저 등록</button>
+          <button id="downloadAccountsCsv" class="btn" type="button">전체 계정 CSV 다운로드</button>
+          <button id="clearCustomAccounts" class="btn" type="button">브라우저 추가 계정 초기화</button>
+        </div>
+        <label class="field">CSV 일괄 등록 붙여넣기<textarea id="bulkCsv" rows="8" placeholder="id,pw,name,handle,code,tier,category,item,url,followers,coupon"></textarea></label>
+        <button id="bulkImportBtn" class="btn" type="button">CSV 붙여넣기 등록</button>
+        <div class="table-wrap"><table><caption class="sr-only">전체 인플루언서 계정 목록</caption><thead><tr><th>ID</th><th>이름</th><th>Tier</th><th>카테고리</th><th>Affiliate Code</th><th>추천 아이템</th></tr></thead><tbody id="adminAccountRows"></tbody></table></div>
+      </section>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="data.js"></script>
+  <script src="dashboard.js"></script>
+</body>
+</html>

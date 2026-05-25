@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRVN 숏폼 커머스</title>
+  <meta name="description" content="숏폼 영상 중심으로 제품 발견부터 구매 랜딩까지 연결되는 스타인티비 숏폼 커머스 플랫폼" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+
+<body>
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="topbar">
+    <a class="brand" href="index.html" aria-label="GRVN 홈">
+      <span class="brand-mark" aria-hidden="true">GRVN</span>
+    </a>
+    <nav class="nav" aria-label="주요 메뉴">
+      <a href="#shop">숏폼 쇼핑</a>
+      <a href="influencer-dashboard.html" target="_blank" rel="noopener">인플 접속</a>
+    </nav>
+  </header>
+
+  <main id="main" class="page">
+    <section class="hero-split" aria-labelledby="hero-title">
+      <div class="hero-copy">
+        <p class="eyebrow">VIDEO-FIRST SHOPPING PLATFORM</p>
+        <h1 id="hero-title">보는 순간 구매로 이어지는 숏폼커머스 자사몰</h1>
+        <p>뷰티·패션·잡화·라이프스타일 4개 카테고리로 운영됩니다. 모든 상품은 숏폼 영상 하단의 버튼으로 제품 클릭 시 별도 결제 랜딩으로 이동합니다.</p>
+        <a class="btn primary" href="#shop">숏폼 쇼핑 시작</a>
+      </div>
+      <aside class="hero-panel" aria-label="플랫폼 요약">
+        <div class="kpi-grid">
+          <div><strong>4</strong><span>카테고리</span></div>
+          <div><strong>1</strong><span>영상 중심 UX</span></div>
+          <div><strong>분리</strong><span>회원·정산</span></div>
+        </div>
+        <p class="notice small">고객 화면에는 인플루언서의 매출·코드·수수료 정보가 노출되지 않습니다.</p>
+      </aside>
+    </section>
+
+    <section id="shop" class="shop-section" aria-labelledby="shop-title">
+      <p class="eyebrow">SHOP BY SHORT-FORM</p>
+      <div class="section-head">
+        <h2 id="shop-title">숏폼 피드</h2>
+        <label class="search-label">상품명, 브랜드 검색
+          <input id="search" type="search" placeholder="상품명, 브랜드 검색" autocomplete="off" />
+        </label>
+      </div>
+      <div class="tabs" role="tablist" aria-label="상품 카테고리">
+        <button class="tab" type="button" data-cat="all" aria-selected="true">전체</button>
+        <button class="tab" type="button" data-cat="뷰티">뷰티</button>
+        <button class="tab" type="button" data-cat="패션">패션</button>
+        <button class="tab" type="button" data-cat="잡화">잡화</button>
+        <button class="tab" type="button" data-cat="라이프스타일">라이프스타일</button>
+      </div>
+      <div id="feed" class="feed-grid" aria-live="polite"></div>
+    </section>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="data.js"></script>
+  <script src="shop.js"></script>
+</body>
+
+</html>
