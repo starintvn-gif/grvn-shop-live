@@ -1,24 +1,28 @@
 <!doctype html>
 <html lang="ko">
+
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>상품 랜딩 / GRVN</title>
   <meta name="description" content="숏폼 영상과 웹 상세페이지를 함께 확인하고 옵션 선택, 결제 테스트까지 진행하는 상품 랜딩페이지" />
-  <link rel="stylesheet" href="styles.css" />
+  <link rel="stylesheet" href="./styles.css?v=20260529-2" />
 </head>
+
 <body>
   <a class="skip-link" href="#main">본문 바로가기</a>
   <main id="main" class="landing-wrap landing-page-detail">
     <div class="topbar" style="position:static;border-radius:24px;margin-bottom:18px">
       <a class="brand" href="index.html"><span class="brand-mark" aria-hidden="true">GRVN</span></a>
-      <nav class="nav" aria-label="랜딩 메뉴"><a href="index.html">쇼핑 페이지</a><a href="influencer-dashboard.html" target="_blank" rel="noopener">인플 대시보드</a></nav>
+      <nav class="nav" aria-label="랜딩 메뉴"><a href="index.html">쇼핑 페이지</a><a href="influencer-dashboard.html"
+          target="_blank" rel="noopener">인플 대시보드</a></nav>
     </div>
 
     <section class="landing-card landing-detail-card" aria-labelledby="productTitle">
       <div class="landing-detail-grid">
         <aside class="sticky-media" aria-label="상품 숏폼 영상">
-          <video id="landingVideo" src="assets/sample-shortform.mp4" autoplay muted loop playsinline controls aria-label="상품 숏폼 영상"></video>
+          <video id="landingVideo" src="assets/sample-shortform.mp4" autoplay muted loop playsinline controls
+            aria-label="상품 숏폼 영상"></video>
           <div class="media-overlay">
             <b>Short-form Preview</b>
             <p>영상은 좌측에 고정되고, 우측에서 상품 상세·옵션·결제를 한 번에 확인합니다.</p>
@@ -29,7 +33,8 @@
           <p class="eyebrow">SHORT-FORM LINKED PRODUCT</p>
           <h1 id="productTitle">상품명</h1>
           <p id="productDesc" class="muted">상품 설명</p>
-          <div class="price-box"><strong id="priceText">₩0</strong><span class="muted">Affiliate <b id="affCode">-</b></span></div>
+          <div class="price-box"><strong id="priceText">₩0</strong><span class="muted">Affiliate <b
+                id="affCode">-</b></span></div>
 
           <nav class="detail-tabs" aria-label="상품 상세 바로가기">
             <a href="#buy">구매 옵션</a>
@@ -49,7 +54,8 @@
 
           <section id="detail" class="detail-section" aria-labelledby="detail-title">
             <h2 id="detail-title">웹 상세페이지 미리보기</h2>
-            <p class="muted">실제 오픈 시 브랜드 상세 이미지, 모델 착장 컷, 소재 설명, 사용법/스타일링 콘텐츠를 이 영역에 업로드합니다. 현재는 프론트 MVP용 상세페이지 블록입니다.</p>
+            <p class="muted">실제 오픈 시 브랜드 상세 이미지, 모델 착장 컷, 소재 설명, 사용법/스타일링 콘텐츠를 이 영역에 업로드합니다. 현재는 프론트 MVP용 상세페이지 블록입니다.
+            </p>
             <div class="look-grid" aria-label="상세 이미지 예시">
               <div class="look-tile">LOOK 01<br><span id="detailCat1">CATEGORY</span></div>
               <div class="look-tile">DETAIL CUT<br><span id="detailBrand">BRAND</span></div>
@@ -60,26 +66,54 @@
           <section id="spec" class="detail-section" aria-labelledby="spec-title">
             <h2 id="spec-title">상품 정보</h2>
             <dl class="spec-list">
-              <div><dt>브랜드</dt><dd id="specBrand">-</dd></div>
-              <div><dt>카테고리</dt><dd id="specCategory">-</dd></div>
-              <div><dt>상품 ID</dt><dd id="specProductId">-</dd></div>
-              <div><dt>Clip ID</dt><dd id="specClipId">-</dd></div>
-              <div><dt>수수료율</dt><dd id="specCommission">-</dd></div>
+              <div>
+                <dt>브랜드</dt>
+                <dd id="specBrand">-</dd>
+              </div>
+              <div>
+                <dt>카테고리</dt>
+                <dd id="specCategory">-</dd>
+              </div>
+              <div>
+                <dt>상품 ID</dt>
+                <dd id="specProductId">-</dd>
+              </div>
+              <div>
+                <dt>Clip ID</dt>
+                <dd id="specClipId">-</dd>
+              </div>
+              <div>
+                <dt>수수료율</dt>
+                <dd id="specCommission">-</dd>
+              </div>
             </dl>
           </section>
 
           <section id="review" class="detail-section" aria-labelledby="review-title">
             <h2 id="review-title">숏폼 리뷰 포인트</h2>
-            <article class="review-card"><b>콘텐츠 전환 포인트</b><p class="muted">영상에서 실제 착용/사용 장면을 먼저 보여주고, 바로 아래 PIP 상품 버튼과 랜딩페이지로 연결합니다.</p></article>
-            <article class="review-card"><b>구매 설득 포인트</b><p class="muted">가격, 옵션, 배송, 교환 정보를 한 화면에 배치해 고객 이탈을 줄이는 구조입니다.</p></article>
+            <article class="review-card"><b>콘텐츠 전환 포인트</b>
+              <p class="muted">영상에서 실제 착용/사용 장면을 먼저 보여주고, 바로 아래 PIP 상품 버튼과 랜딩페이지로 연결합니다.</p>
+            </article>
+            <article class="review-card"><b>구매 설득 포인트</b>
+              <p class="muted">가격, 옵션, 배송, 교환 정보를 한 화면에 배치해 고객 이탈을 줄이는 구조입니다.</p>
+            </article>
           </section>
 
           <section id="delivery" class="detail-section" aria-labelledby="delivery-title">
             <h2 id="delivery-title">배송/교환/정산 안내</h2>
             <div class="policy-grid">
-              <article><h3>배송</h3><p class="muted">결제 완료 후 2~3영업일 내 발송 기준</p></article>
-              <article><h3>교환/반품</h3><p class="muted">수령 후 7일 이내, 상품 훼손 시 제한</p></article>
-              <article><h3>정산</h3><p class="muted">Affiliate 코드별 월 단위 집계</p></article>
+              <article>
+                <h3>배송</h3>
+                <p class="muted">결제 완료 후 2~3영업일 내 발송 기준</p>
+              </article>
+              <article>
+                <h3>교환/반품</h3>
+                <p class="muted">수령 후 7일 이내, 상품 훼손 시 제한</p>
+              </article>
+              <article>
+                <h3>정산</h3>
+                <p class="muted">Affiliate 코드별 월 단위 집계</p>
+              </article>
             </div>
           </section>
 
@@ -106,4 +140,5 @@
   <script src="data.js"></script>
   <script src="product.js"></script>
 </body>
+
 </html>
