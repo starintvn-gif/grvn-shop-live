@@ -1,8 +1,8 @@
 const STN_PRODUCTS = [
-  {id:'beauty-001',category:'뷰티',brand:'MEDI JEWELRY',name:'Clinic Derma Recovery Cream',price:69000,commission:.12,tag:'병원·피부장벽 케어',desc:'피부과 시술 후 회복과 보습을 돕는 더마 크림. 숏폼 리뷰와 즉시 구매 전환에 최적화된 상품입니다.',options:['50ml','50ml + Mask 3ea','2 Set Bundle'],video:'assets/hyeho_video.mp4'},
-  {id:'fashion-001',category:'패션',brand:'GRVN',name:'Street Layered Hoodie',price:128000,commission:.15,tag:'댄서 룩 기반 패션',desc:'댄스 숏폼에 잘 보이는 오버핏 후디. 영상 착장 → 구매 전환용 메인 아이템입니다.',options:['Black / M','Black / L','Charcoal / M','Charcoal / L'],video:'assets/sample-shortform.mp4'},
-  {id:'goods-001',category:'잡화',brand:'STN SELECT',name:'Mini Crossbody Utility Bag',price:59000,commission:.10,tag:'데일리 숏폼 소품',desc:'영상 속 룩에 바로 매칭되는 미니 크로스백. 패션·라이프 영상 동시 활용이 가능합니다.',options:['Black','Silver','Ivory'],video:'assets/sample-shortform.mp4'},
-  {id:'life-001',category:'라이프스타일',brand:'ON-AIR PICK',name:'Portable Mood Light Speaker',price:89000,commission:.10,tag:'룸·파티 콘텐츠용',desc:'라이브 방송, 숏폼 촬영 배경, VVIP 라이프스타일 콘텐츠에 어울리는 무드 스피커입니다.',options:['Cream','Graphite'],video:'assets/sample-shortform.mp4'}
+  { id: 'beauty-001', category: '뷰티', brand: 'MEDI JEWELRY', name: 'Clinic Derma Recovery Cream', price: 69000, commission: .12, tag: '병원·피부장벽 케어', desc: '피부과 시술 후 회복과 보습을 돕는 더마 크림. 숏폼 리뷰와 즉시 구매 전환에 최적화된 상품입니다.', options: ['50ml', '50ml + Mask 3ea', '2 Set Bundle'], video: 'assets/hyeho_video.mp4' },
+  { id: 'fashion-001', category: '패션', brand: 'GRVN', name: 'Street Layered Hoodie', price: 128000, commission: .15, tag: '댄서 룩 기반 패션', desc: '댄스 숏폼에 잘 보이는 오버핏 후디. 영상 착장 → 구매 전환용 메인 아이템입니다.', options: ['Black / M', 'Black / L', 'Charcoal / M', 'Charcoal / L'], video: 'assets/sample-shortform.mp4' },
+  { id: 'goods-001', category: '잡화', brand: 'STN SELECT', name: 'Mini Crossbody Utility Bag', price: 59000, commission: .10, tag: '데일리 숏폼 소품', desc: '영상 속 룩에 바로 매칭되는 미니 크로스백. 패션·라이프 영상 동시 활용이 가능합니다.', options: ['Black', 'Silver', 'Ivory'], video: 'assets/sample-shortform.mp4' },
+  { id: 'life-001', category: '라이프스타일', brand: 'ON-AIR PICK', name: 'Portable Mood Light Speaker', price: 89000, commission: .10, tag: '룸·파티 콘텐츠용', desc: '라이브 방송, 숏폼 촬영 배경, VVIP 라이프스타일 콘텐츠에 어울리는 무드 스피커입니다.', options: ['Cream', 'Graphite'], video: 'assets/sample-shortform.mp4' }
 ];
 
 
@@ -4654,36 +4654,36 @@ const STN_INFLUENCERS = {
   }
 };
 
-function stnGetAccounts(){
+function stnGetAccounts() {
   const saved = JSON.parse(localStorage.getItem('stn_influencer_accounts') || '{}');
-  return {...STN_INFLUENCERS, ...saved};
+  return { ...STN_INFLUENCERS, ...saved };
 }
-function stnSaveAccounts(accounts){
-  const custom = {...accounts};
-  Object.keys(STN_INFLUENCERS).forEach(k=>delete custom[k]);
+function stnSaveAccounts(accounts) {
+  const custom = { ...accounts };
+  Object.keys(STN_INFLUENCERS).forEach(k => delete custom[k]);
   localStorage.setItem('stn_influencer_accounts', JSON.stringify(custom));
 }
-function stnRead(){return JSON.parse(localStorage.getItem('stn_affiliate_events') || '[]')}
-function stnWrite(rows){localStorage.setItem('stn_affiliate_events', JSON.stringify(rows))}
-function stnLog(event){
-  const payload = {...event,createdAt:new Date().toISOString()};
+function stnRead() { return JSON.parse(localStorage.getItem('stn_affiliate_events') || '[]') }
+function stnWrite(rows) { localStorage.setItem('stn_affiliate_events', JSON.stringify(rows)) }
+function stnLog(event) {
+  const payload = { ...event, createdAt: new Date().toISOString() };
   // Production automation: try server API first, then fallback to browser localStorage for MVP/demo stability.
   const apiBase = localStorage.getItem('stn_api_base') || '';
   fetch(`${apiBase}/api/events`, {
-    method:'POST',
-    headers:{'Content-Type':'application/json'},
-    body:JSON.stringify(payload)
-  }).catch(()=>{
-    const rows=stnRead();
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(payload)
+  }).catch(() => {
+    const rows = stnRead();
     rows.push(payload);
     stnWrite(rows);
   });
-  const rows=stnRead();
+  const rows = stnRead();
   rows.push(payload);
   stnWrite(rows);
 }
-function money(n){return new Intl.NumberFormat('ko-KR',{style:'currency',currency:'KRW',maximumFractionDigits:0}).format(Number(n)||0)}
-function qs(name){return new URLSearchParams(location.search).get(name)}
-function getProduct(id){return STN_PRODUCTS.find(p=>p.id===id) || STN_PRODUCTS[0]}
-function getActiveCode(){return (qs('aff') || localStorage.getItem('stn_last_aff') || 'STNDEMO').toUpperCase()}
-function toast(msg){const el=document.getElementById('toast'); if(!el){alert(msg); return;} el.textContent=msg; el.classList.add('show'); clearTimeout(window.__toast); window.__toast=setTimeout(()=>el.classList.remove('show'),2200)}
+function money(n) { return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(Number(n) || 0) }
+function qs(name) { return new URLSearchParams(location.search).get(name) }
+function getProduct(id) { return STN_PRODUCTS.find(p => p.id === id) || STN_PRODUCTS[0] }
+function getActiveCode() { return (qs('aff') || localStorage.getItem('stn_last_aff') || 'STNDEMO').toUpperCase() }
+function toast(msg) { const el = document.getElementById('toast'); if (!el) { alert(msg); return; } el.textContent = msg; el.classList.add('show'); clearTimeout(window.__toast); window.__toast = setTimeout(() => el.classList.remove('show'), 2200) }

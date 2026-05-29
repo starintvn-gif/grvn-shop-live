@@ -22,7 +22,7 @@
 const ADMIN_ID = 'mike';
 const ADMIN_PW = '0806';
 
-const LS_USER  = 'grvn_current_user';
+const LS_USER = 'grvn_current_user';
 const LS_ACCTS = 'grvn_influencer_accounts';
 
 /* ─── DOM 셀렉터 & 유틸 ─────────────────────────────────────── */
@@ -128,17 +128,17 @@ function importAccountsCsv(text) {
     header.forEach((h, i) => row[h] = vals[i] || '');
     if (!row.id) return;
     accounts[row.id] = {
-      pw:        row.pw        || '1234',
-      name:      row.name      || row.id,
-      handle:    row.handle    || '',
-      code:      row.code      || row.id.toUpperCase(),
-      tier:      row.tier      || '',
-      category:  row.category  || '',
-      item:      row.item      || '',
-      url:       row.url       || '',
+      pw: row.pw || '1234',
+      name: row.name || row.id,
+      handle: row.handle || '',
+      code: row.code || row.id.toUpperCase(),
+      tier: row.tier || '',
+      category: row.category || '',
+      item: row.item || '',
+      url: row.url || '',
       followers: row.followers || '',
-      coupon:    row.coupon    || '',
-      isAdmin:   row.id === ADMIN_ID
+      coupon: row.coupon || '',
+      isAdmin: row.id === ADMIN_ID
     };
     count++;
   });
@@ -150,7 +150,7 @@ function importAccountsCsv(text) {
    UI 렌더링
    ============================================================= */
 function renderAdminPanel() {
-  const acc   = account();
+  const acc = account();
   const panel = $('adminPanel');
   if (!panel) return;
   if (!isAdminAccount(acc)) { panel.classList.add('hidden'); return; }
@@ -163,11 +163,11 @@ function renderAdminPanel() {
   $('adminAccountRows').innerHTML = rows.map(([id, a]) =>
     `<tr>
       <td>${id}</td>
-      <td>${a.name      || '-'}</td>
-      <td>${a.tier      || '-'}</td>
-      <td>${a.category  || '-'}</td>
-      <td>${a.code      || '-'}</td>
-      <td>${a.item      || '-'}</td>
+      <td>${a.name || '-'}</td>
+      <td>${a.tier || '-'}</td>
+      <td>${a.category || '-'}</td>
+      <td>${a.code || '-'}</td>
+      <td>${a.item || '-'}</td>
     </tr>`
   ).join('');
 }
@@ -182,21 +182,21 @@ function showDashboard() {
   $('loginPanel').classList.add('hidden');
   $('dashboardPanel').classList.remove('hidden');
 
-  $('userName').textContent   = acc.name;
-  $('myCode').textContent     = acc.code;
+  $('userName').textContent = acc.name;
+  $('myCode').textContent = acc.code;
   $('myLinkText').textContent = makeLink(acc.code);
 
-  const events     = API_LAYER.getEvents();
-  const rows       = events.filter(r =>
+  const events = API_LAYER.getEvents();
+  const rows = events.filter(r =>
     String(r.code).toUpperCase() === String(acc.code).toUpperCase() || isAdminAccount(acc));
-  const clicks     = rows.filter(r => r.type === 'click').length;
-  const orders     = rows.filter(r => r.type === 'order');
-  const revenue    = orders.reduce((a, r) => a + (Number(r.amount)     || 0), 0);
+  const clicks = rows.filter(r => r.type === 'click').length;
+  const orders = rows.filter(r => r.type === 'order');
+  const revenue = orders.reduce((a, r) => a + (Number(r.amount) || 0), 0);
   const commission = orders.reduce((a, r) => a + (Number(r.commission) || 0), 0);
 
-  $('statClicks').textContent     = clicks;
-  $('statOrders').textContent     = orders.length;
-  $('statRevenue').textContent    = money(revenue);
+  $('statClicks').textContent = clicks;
+  $('statOrders').textContent = orders.length;
+  $('statRevenue').textContent = money(revenue);
   $('statCommission').textContent = money(commission);
 
   $('eventRows').innerHTML = rows.slice().reverse().map(r =>
@@ -217,8 +217,8 @@ function showDashboard() {
 
 /* 로그인 */
 $('loginBtn')?.addEventListener('click', () => {
-  const id  = $('loginId').value.trim();
-  const pw  = $('loginPw').value;
+  const id = $('loginId').value.trim();
+  const pw = $('loginPw').value;
   const acc = API_LAYER.login(id, pw);
   if (acc) {
     currentUserId = id;
@@ -232,11 +232,11 @@ $('loginBtn')?.addEventListener('click', () => {
 
 /* 신규 회원가입 */
 $('signupBtn')?.addEventListener('click', () => {
-  const name   = $('signupName').value.trim();
+  const name = $('signupName').value.trim();
   const handle = $('signupHandle').value.trim();
-  const id     = $('signupId').value.trim();
-  const pw     = $('signupPw').value;
-  let   code   = normalizeCode($('signupCode').value || id || handle);
+  const id = $('signupId').value.trim();
+  const pw = $('signupPw').value;
+  let code = normalizeCode($('signupCode').value || id || handle);
 
   if (!name || !id || pw.length < 4) {
     toast('이름, 아이디, 4자 이상 비밀번호를 입력하세요.');
@@ -284,9 +284,9 @@ $('changeCodeBtn')?.addEventListener('click', () => {
 
 /* 이벤트 CSV 다운로드 */
 $('exportCsv')?.addEventListener('click', () => {
-  const acc    = account();
+  const acc = account();
   const events = API_LAYER.getEvents();
-  const rows   = events.filter(r =>
+  const rows = events.filter(r =>
     String(r.code).toUpperCase() === String(acc.code).toUpperCase() || isAdminAccount(acc));
   const header = ['createdAt', 'type', 'code', 'productId', 'productName', 'qty', 'amount', 'commission'];
   const csv = [
