@@ -21,13 +21,6 @@ let STN_PRODUCTS = [
   { id: "salon-songjieun-two-way-dual-blouse", category: "패션", brand: "SALON DE SEOUL", name: "투웨이 듀얼 블라우스", originalPrice: 134000, price: 90700, benefitRate: 32, commission: 0.1, tag: "송지은 착용 · SALON DE SEOUL 캠페인", desc: "송지은 인플루언서 영상과 연결된 SALON DE SEOUL 어필리에이트 상품입니다. 정상가 134,000원, 최종혜택가 90,700원 기준으로 구성했으며, 상세 옵션·소재·컬러 정보는 GRVN 내부 상세페이지 기준으로 확인합니다.", options: ["상세페이지 기준 옵션 선택", "컬러/사이즈는 구매 페이지 기준", "문의 후 선택"], video: "assets/salon_songjieun_h264.mp4", detailImage: "assets/detail_pages/salon-songjieun-two-way-dual-blouse.jpg", sourceUrl: "https://hi.thehyundai.com/product/40B0105443?keyword=&searchType=product", sourceProductCode: "40B0105443", campaign: "salondeseoul_affiliate_2026", defaultClip: "songjieun_reels", defaultInfluencer: "송지은", defaultAffiliate: "JIEUN01" }
 ];
 
-let STN_PRODUCTS = [
-  { id: "salon-woojung-color-blocking-string-onepiece", category: "패션", brand: "SALON DE SEOUL", name: "컬러 블로킹 스트링 원피스", ... },
-  { id: "salon-woojung-lily-pleats-onepiece", category: "패션", brand: "SALON DE SEOUL", name: "릴리 플리츠 원피스", ... },
-  ...
-  { id: "salon-songjieun-two-way-dual-blouse", category: "패션", brand: "SALON DE SEOUL", name: "투웨이 듀얼 블라우스", ... }
-];
-
 // Admin MVP: products saved from admin.html are merged at runtime.
 // This keeps the current static front-end working while allowing no-code product registration.
 function stnReadAdminProducts() {
@@ -64,10 +57,6 @@ function stnHydrateProducts() {
 }
 
 stnHydrateProducts();
-
-const STN_INFLUENCERS = {
-  ...
-};
 
 const STN_INFLUENCERS = {
   "mike": {
