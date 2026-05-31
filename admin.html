@@ -1,0 +1,156 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>GRVN Admin / 상품·숏폼 등록</title>
+  <meta name="description" content="GRVN 숏폼 커머스 상품, 숏폼, 인플루언서 코드 등록 관리자 페이지" />
+  <link rel="stylesheet" href="/styles.css?v=20260531-admin-mvp" />
+</head>
+
+<body class="admin-body">
+  <a class="skip-link" href="#main">본문 바로가기</a>
+  <header class="topbar admin-topbar">
+    <a class="brand" href="index.html" aria-label="GRVN 홈"><span class="brand-mark" aria-hidden="true">GRVN</span></a>
+    <nav class="nav" aria-label="관리자 메뉴">
+      <a href="index.html" target="_blank" rel="noopener">메인 확인</a>
+      <a href="influencer-dashboard.html" target="_blank" rel="noopener">인플 대시보드</a>
+      <a href="product-landing.html" target="_blank" rel="noopener">랜딩</a>
+    </nav>
+  </header>
+
+  <main id="main" class="admin-shell">
+    <section id="loginPanel" class="admin-login-card" aria-labelledby="loginTitle">
+      <p class="eyebrow">STARINTV COMMERCE ADMIN</p>
+      <h1 id="loginTitle">관리자 접속</h1>
+      <p class="muted">상품·숏폼·인플루언서 aff 코드를 등록하면 메인 피드와 상품 상세 랜딩에 즉시 반영되는 MVP 관리자 페이지입니다.</p>
+      <div class="admin-login-grid">
+        <label class="field">아이디<input id="adminId" type="text" autocomplete="username"
+            placeholder="mike 또는 woojung" /></label>
+        <label class="field">비밀번호<input id="adminPw" type="password" autocomplete="current-password"
+            placeholder="비밀번호" /></label>
+      </div>
+      <button id="adminLoginBtn" class="btn primary" type="button">관리자 로그인</button>
+    </section>
+
+    <section id="adminApp" class="admin-app hidden" aria-label="GRVN 관리자 앱">
+      <div class="admin-hero">
+        <div>
+          <p class="eyebrow">PRODUCT UPLOAD MVP</p>
+          <h1>상품·숏폼 등록 Admin</h1>
+          <p class="muted">현재 프론트엔드 구조에 맞춰 <b>브랜드명, 상품명, 가격, 상세 이미지 경로, 영상 경로, 인플루언서명, aff 코드</b>를 입력하면 자동으로 노출됩니다.</p>
+        </div>
+        <div class="admin-hero-actions">
+          <button id="exportBtn" class="btn dark" type="button">data.js용 코드 복사</button>
+          <button id="resetFormBtn" class="btn" type="button">새 상품 입력</button>
+          <button id="logoutBtn" class="btn" type="button">로그아웃</button>
+        </div>
+      </div>
+
+      <div class="admin-kpi-grid" aria-label="관리자 요약">
+        <article><span>등록 상품</span><strong id="adminProductCount">0</strong></article>
+        <article><span>인플루언서</span><strong id="adminInfluencerCount">0</strong></article>
+        <article><span>브랜드</span><strong id="adminBrandCount">0</strong></article>
+        <article><span>상태</span><strong>LOCAL MVP</strong></article>
+      </div>
+
+      <div class="admin-grid">
+        <form id="productForm" class="admin-form-card" autocomplete="off">
+          <input id="editingId" type="hidden" />
+          <div class="form-title-row">
+            <div>
+              <p class="eyebrow">01 / PRODUCT DATA</p>
+              <h2>상품 기본 정보</h2>
+            </div>
+            <span class="admin-chip">필수 입력</span>
+          </div>
+
+          <div class="form-grid2">
+            <label class="field">브랜드명 *<input id="brand" required placeholder="예: SALON DE SEOUL" /></label>
+            <label class="field">카테고리 *<input id="category" required placeholder="예: 패션 / 뷰티 / 웰니스" /></label>
+            <label class="field wide">상품명 *<input id="name" required placeholder="예: 크리스틴 트위드 자켓" /></label>
+            <label class="field">정상가<input id="originalPrice" type="number" min="0" step="100"
+                placeholder="예: 178000" /></label>
+            <label class="field">판매가 *<input id="price" required type="number" min="0" step="100"
+                placeholder="예: 120480" /></label>
+            <label class="field">혜택률(%)<input id="benefitRate" type="number" min="0" max="100"
+                placeholder="예: 32" /></label>
+            <label class="field">수수료율(%)<input id="commission" type="number" min="0" max="100" step="0.1"
+                value="10" /></label>
+            <label class="field">원본 상품 코드<input id="sourceProductCode" placeholder="예: 40B0005244" /></label>
+            <label class="field wide">상품 설명<textarea id="desc" rows="4"
+                placeholder="상품/콘텐츠 설명을 입력하세요."></textarea></label>
+            <label class="field wide">옵션 목록<textarea id="options" rows="3"
+                placeholder="줄바꿈으로 옵션 입력&#10;예: FREE / BLACK&#10;예: S / M / L"></textarea></label>
+          </div>
+
+          <div class="form-title-row sub-row">
+            <div>
+              <p class="eyebrow">02 / SHORT-FORM & DETAIL</p>
+              <h2>영상·상세 이미지 연결</h2>
+            </div>
+          </div>
+          <div class="form-grid2">
+            <label class="field wide">숏폼 영상 경로 *<input id="video" required
+                placeholder="예: assets/salon_woojung_h264.mp4" /></label>
+            <label class="field wide">상세 이미지 경로 *<input id="detailImage" required
+                placeholder="예: assets/detail_pages/product-name.jpg" /></label>
+            <label class="field">Clip ID<input id="defaultClip" placeholder="예: woojung_reels" /></label>
+            <label class="field">캠페인명<input id="campaign" placeholder="예: salondeseoul_affiliate_2026" /></label>
+            <label class="field wide">원본/구매 참고 URL<input id="sourceUrl"
+                placeholder="브랜드/현백/스마트스토어 등 내부 참고 URL" /></label>
+          </div>
+
+          <div class="form-title-row sub-row">
+            <div>
+              <p class="eyebrow">03 / INFLUENCER AFFILIATE</p>
+              <h2>인플루언서 코드 연결</h2>
+            </div>
+          </div>
+          <div class="form-grid2">
+            <label class="field">인플루언서명 *<input id="defaultInfluencer" required placeholder="예: 이우정" /></label>
+            <label class="field">aff 코드 *<input id="defaultAffiliate" required placeholder="예: WOOJUNG01" /></label>
+            <label class="field wide">노출 태그<input id="tag" placeholder="예: 이우정 착용 · SALON DE SEOUL 캠페인" /></label>
+          </div>
+
+          <div class="admin-preview-box" aria-label="미리보기">
+            <video id="videoPreview" controls muted playsinline preload="metadata"></video>
+            <img id="imagePreview" alt="상세 이미지 미리보기" />
+          </div>
+
+          <div class="form-actions sticky-actions">
+            <button class="btn primary" type="submit">저장하고 메인/상세에 반영</button>
+            <button id="previewLandingBtn" class="btn dark" type="button">랜딩 미리보기</button>
+            <button id="deleteBtn" class="btn danger" type="button">선택 상품 삭제</button>
+          </div>
+          <p class="notice"><strong>현재 버전:</strong> 브라우저 localStorage 기반 MVP입니다. 실제 전 직원/브랜드사 공용 운영은 다음 단계에서 Cloudflare
+            D1/R2/Workers API로 연결하면 됩니다.</p>
+        </form>
+
+        <aside class="admin-list-card" aria-labelledby="listTitle">
+          <div class="form-title-row">
+            <div>
+              <p class="eyebrow">REGISTERED PRODUCTS</p>
+              <h2 id="listTitle">Admin 등록 상품</h2>
+            </div>
+          </div>
+          <label class="search-label admin-search">검색<input id="adminSearch" type="search"
+              placeholder="브랜드, 상품, 인플루언서 검색" /></label>
+          <div id="productList" class="admin-product-list"></div>
+          <div class="admin-export-box">
+            <h3>배포용 백업</h3>
+            <p class="muted">Cloudflare Pages에 영구 반영하려면 아래 코드를 복사해 개발자에게 전달하거나, 추후 API 연결 후 자동 저장으로 전환합니다.</p>
+            <textarea id="exportCode" rows="10" readonly></textarea>
+          </div>
+        </aside>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="/data.js?v=20260531-admin-mvp"></script>
+  <script src="/admin.js?v=20260531-admin-mvp"></script>
+</body>
+
+</html>
