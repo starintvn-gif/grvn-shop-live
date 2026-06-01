@@ -4728,27 +4728,80 @@ function stnSaveAccounts(accounts) {
   Object.keys(STN_INFLUENCERS).forEach(k => delete custom[k]);
   localStorage.setItem('stn_influencer_accounts', JSON.stringify(custom));
 }
-function stnRead() { return JSON.parse(localStorage.getItem('stn_affiliate_events') || '[]') }
-function stnWrite(rows) { localStorage.setItem('stn_affiliate_events', JSON.stringify(rows)) }
-function stnLog(event) {
-  const payload = { ...event, createdAt: new Date().toISOString() };
-  // Production automation: try server API first, then fallback to browser localStorage for MVP/demo stability.
-  const apiBase = localStorage.getItem('stn_api_base') || '';
-  fetch(`${apiBase}/api/events`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(payload)
-  }).catch(() => {
-    const rows = stnRead();
-    rows.push(payload);
-    stnWrite(rows);
-  });
+const GRVN_API_BASE =
+  window.GRVN_API_BASE ||
+  localStorage.getItem('grvn_api_base') ||
+  localStorage.getItem('stn_api_base') ||
+  '';
+
+function stnRead() {
+  try {
+    return JSON.parse(localStorage.getItem('stn_affiliate_events') || '[]');
+  } catch {
+    return [];
+  }
+}
+
+function stnWrite(rows) {
+  localStorage.setItem('stn_affiliate_events', JSON.stringify(rows));
+}
+
+function saveLocalEvent(payload) {
   const rows = stnRead();
   rows.push(payload);
   stnWrite(rows);
 }
+
+async function stnLog(event) {
+  const payload = {
+    ...event,
+    createdAt: new Date().toISOString(),
+    sessionId: getSessionId(),
+    refCode: getActiveCode()
+  };
+
+  if (!GRVN_API_BASE) {
+    saveLocalEvent(payload);
+    return;
+  }
+
+  try {
+    const res = await fetch(`${GRVN_API_BASE}/api/events`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (!res.ok) throw new Error('API logging failed');
+  } catch (err) {
+    console.warn('API 로그 저장 실패, localStorage로 대체:', err);
+    saveLocalEvent(payload);
+  }
+}
+
+function getSessionId() {
+  let id = localStorage.getItem('grvn_session_id');
+  if (!id) {
+    id = 'sess_' + Date.now() + '_' + Math.random().toString(36).slice(2);
+    localStorage.setItem('grvn_session_id', id);
+  }
+  return id;
+}
 function money(n) { return new Intl.NumberFormat('ko-KR', { style: 'currency', currency: 'KRW', maximumFractionDigits: 0 }).format(Number(n) || 0) }
 function qs(name) { return new URLSearchParams(location.search).get(name) }
 function getProduct(id) { return STN_PRODUCTS.find(p => p.id === id) || STN_PRODUCTS[0] }
-function getActiveCode() { return (qs('aff') || localStorage.getItem('stn_last_aff') || 'STNDEMO').toUpperCase() }
+function getActiveCode() {
+  const fromUrl = qs('aff') || qs('code') || qs('coupon');
+
+  if (fromUrl) {
+    const code = String(fromUrl).trim().toUpperCase();
+    localStorage.setItem('stn_last_aff', code);
+    return code;
+  }
+
+  const saved = localStorage.getItem('stn_last_aff');
+  if (saved) return String(saved).trim().toUpperCase();
+
+  return 'GRVN';
+}
 function toast(msg) { const el = document.getElementById('toast'); if (!el) { alert(msg); return; } el.textContent = msg; el.classList.add('show'); clearTimeout(window.__toast); window.__toast = setTimeout(() => el.classList.remove('show'), 2200) }
