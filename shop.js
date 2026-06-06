@@ -7,7 +7,96 @@ let activeType = 'all';
 const currentCode = getActiveCode();
 localStorage.setItem('stn_last_aff', currentCode);
 
-function productType(name){
+function getStaticProducts() {
+  if (Array.isArray(window.STN_PRODUCTS)) {
+    return window.STN_PRODUCTS;
+  }
+
+  if (typeof STN_PRODUCTS !== 'undefined' && Array.isArray(STN_PRODUCTS)) {
+    return STN_PRODUCTS;
+  }
+
+  return [];
+}
+
+let ACTIVE_PRODUCTS = getStaticProducts();
+
+async function loadProductsFromApi() {
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    '';
+
+  if (!apiBase) {
+    console.log('[GRVN] API base 없음. data.js 상품 사용');
+    return ACTIVE_PRODUCTS;
+  }
+
+  try {
+    const res = await fetch(`${apiBase}/api/products?limit=100`);
+
+    if (!res.ok) {
+      throw new Error(`Products API failed: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
+      console.log('[GRVN] API 상품 로딩 성공:', data.products.length);
+
+      /*
+        지금은 Supabase 상품이 1개뿐이므로,
+        기존 상품 전체를 대체하지 않고 API 상품을 앞에 붙이는 방식으로 시작합니다.
+        나중에 DB에 20개 상품이 모두 들어가면 완전 대체로 바꿀 수 있습니다.
+      */
+      const existing = getStaticProducts();
+
+      // 기존 data.js 상품을 기본값으로 유지합니다.
+      // 이유: 현재 영상/클립/인플루언서 연결 정보는 아직 data.js에 있기 때문입니다.
+      const merged = existing.map((oldProduct) => {
+        const matchedApiProduct = data.products.find((apiProduct) => {
+          const apiKey = apiProduct.slug || apiProduct.id;
+          const oldKey = oldProduct.slug || oldProduct.id;
+
+          return (
+            apiKey === oldKey ||
+            apiProduct.slug === oldProduct.id ||
+            apiProduct.name === oldProduct.name
+          );
+        });
+
+        if (!matchedApiProduct) {
+          return oldProduct;
+        }
+
+        return {
+          ...oldProduct,
+          ...matchedApiProduct,
+
+          // 화면 렌더링에 꼭 필요한 기존 프론트 필드는 유지합니다.
+          id: oldProduct.id || matchedApiProduct.slug || matchedApiProduct.id,
+          slug: matchedApiProduct.slug || oldProduct.slug || oldProduct.id,
+          video: oldProduct.video,
+          defaultClip: oldProduct.defaultClip,
+          defaultInfluencer: oldProduct.defaultInfluencer,
+          defaultAffiliate: oldProduct.defaultAffiliate,
+          campaign: oldProduct.campaign
+        };
+      });
+
+      // 아직 기존 data.js 상품과 매칭되지 않는 API 상품은 화면에 추가하지 않습니다.
+      // 이유: video/defaultClip 값이 없으면 /undefined 오류가 나기 때문입니다.
+      ACTIVE_PRODUCTS = merged;
+    }
+  } catch (err) {
+    console.warn('[GRVN] 상품 API 연결 실패. data.js 상품 사용:', err);
+    ACTIVE_PRODUCTS = getStaticProducts();
+  }
+
+  return ACTIVE_PRODUCTS;
+}
+function productType(name) {
   const n = String(name || '');
   if (n.includes('원피스')) return '원피스';
   if (n.includes('블라우스')) return '블라우스';
@@ -19,9 +108,14 @@ function productType(name){
   return '기타';
 }
 
-function buildClipGroups(){
+function buildClipGroups() {
   const map = new Map();
-  STN_PRODUCTS.forEach(product => {
+  ACTIVE_PRODUCTS.forEach(product => {
+    if (!product.video && !product.defaultClip) {
+      console.warn('[GRVN] 영상 정보 없는 상품은 화면에서 제외:', product);
+      return;
+    }
+
     const clipId = product.defaultClip || product.video || product.defaultInfluencer || 'stn-shortform';
     if (!map.has(clipId)) {
       map.set(clipId, {
@@ -35,12 +129,12 @@ function buildClipGroups(){
         products: []
       });
     }
-    map.get(clipId).products.push({...product, productType: productType(product.name)});
+    map.get(clipId).products.push({ ...product, productType: productType(product.name) });
   });
   return Array.from(map.values());
 }
 
-function getFilteredClips(){
+function getFilteredClips() {
   const q = (search?.value || '').trim().toLowerCase();
   return buildClipGroups().filter(clip => {
     const matchesInfluencer = activeInfluencer === 'all' || clip.influencer === activeInfluencer;
@@ -51,45 +145,45 @@ function getFilteredClips(){
   });
 }
 
-function openProduct(id, clipId){
+function openProduct(id, clipId) {
   const item = getProduct(id);
-  stnLog({type:'click',event:'product_detail_click',productId:id,productName:item.name,code:currentCode,amount:0,qty:0,commission:0,clip:clipId || item.defaultClip || 'stn-shortform'});
+  stnLog({ type: 'click', event: 'product_detail_click', productId: id, productName: item.name, code: currentCode, amount: 0, qty: 0, commission: 0, clip: clipId || item.defaultClip || 'stn-shortform' });
   const params = new URLSearchParams({
-    product:id,
-    aff:currentCode,
-    clip:clipId || item.defaultClip || 'stn-shortform',
-    utm_source:'instagram',
-    utm_medium:'affiliate',
-    utm_campaign:item.campaign || 'grvn_shortform_commerce',
-    utm_content:`${currentCode.toLowerCase()}_${clipId || item.defaultClip || 'clip'}`
+    product: id,
+    aff: currentCode,
+    clip: clipId || item.defaultClip || 'stn-shortform',
+    utm_source: 'instagram',
+    utm_medium: 'affiliate',
+    utm_campaign: item.campaign || 'grvn_shortform_commerce',
+    utm_content: `${currentCode.toLowerCase()}_${clipId || item.defaultClip || 'clip'}`
   });
   const url = `product-landing.html?${params.toString()}`;
   window.open(url, '_blank', 'noopener,noreferrer');
 }
 
-function copyProductLink(id, clipId){
+function copyProductLink(id, clipId) {
   const item = getProduct(id);
   const params = new URLSearchParams({
-    product:id,
-    aff:currentCode,
-    clip:clipId || item.defaultClip || 'stn-shortform',
-    utm_source:'instagram',
-    utm_medium:'affiliate',
-    utm_campaign:item.campaign || 'grvn_shortform_commerce',
-    utm_content:`${currentCode.toLowerCase()}_${clipId || item.defaultClip || 'clip'}`
+    product: id,
+    aff: currentCode,
+    clip: clipId || item.defaultClip || 'stn-shortform',
+    utm_source: 'instagram',
+    utm_medium: 'affiliate',
+    utm_campaign: item.campaign || 'grvn_shortform_commerce',
+    utm_content: `${currentCode.toLowerCase()}_${clipId || item.defaultClip || 'clip'}`
   });
-  const url = `${location.origin}${location.pathname.replace(/index\.html$/,'')}product-landing.html?${params.toString()}`;
-  navigator.clipboard?.writeText(url).then(()=>toast('상품 랜딩 링크가 복사되었습니다.')).catch(()=>prompt('링크를 복사하세요', url));
+  const url = `${location.origin}${location.pathname.replace(/index\.html$/, '')}product-landing.html?${params.toString()}`;
+  navigator.clipboard?.writeText(url).then(() => toast('상품 랜딩 링크가 복사되었습니다.')).catch(() => prompt('링크를 복사하세요', url));
 }
 
-function productPip(item, clipId, idx){
+function productPip(item, clipId, idx) {
   return `<button class="look-product" type="button" data-open="${item.id}" data-clip="${clipId}" aria-label="${item.name} 개별 상세페이지 새창 열기">
     <span class="look-no">LOOK ${String(idx + 1).padStart(2, '0')}</span>
     <span class="look-meta"><b>${item.productType} · ${item.sourceProductCode || '원본코드'}</b><strong>${item.name}</strong><em>${money(item.price)}${item.benefitRate ? ` · ${item.benefitRate}% 혜택` : ''}</em><small>개별 상세페이지 열기</small></span>
   </button>`;
 }
 
-function clipCard(clip, i){
+function clipCard(clip, i) {
   const productCount = clip.products.length;
   const minPrice = Math.min(...clip.products.map(p => Number(p.price) || 0));
   const maxBenefit = Math.max(...clip.products.map(p => Number(p.benefitRate) || 0));
@@ -99,7 +193,7 @@ function clipCard(clip, i){
     <div class="clip-media-row">
       <div class="video-box single-video-box">
         <span class="clip-badge">${clip.influencer} · ${productCount}착장 in 1 video</span>
-        <video src="${clip.video}" ${i===0?'autoplay':''} muted loop playsinline controls preload="metadata" onerror="this.insertAdjacentHTML('afterend','<p class=&quot;notice video-notice&quot;>영상 파일을 불러오지 못했습니다. assets 경로와 H.264 코덱을 확인하세요.</p>')" aria-label="${clip.influencer} SALON DE SEOUL 숏폼 영상"></video>
+        <video src="${clip.video}" ${i === 0 ? 'autoplay' : ''} muted loop playsinline controls preload="metadata" onerror="this.insertAdjacentHTML('afterend','<p class=&quot;notice video-notice&quot;>영상 파일을 불러오지 못했습니다. assets 경로와 H.264 코덱을 확인하세요.</p>')" aria-label="${clip.influencer} SALON DE SEOUL 숏폼 영상"></video>
         <button class="sound-chip" type="button" aria-label="영상 음소거 전환">▶ VIDEO</button>
       </div>
       <div class="clip-product-panel">
@@ -124,52 +218,52 @@ function clipCard(clip, i){
   </article>`;
 }
 
-function renderFilterTabs(){
+function renderFilterTabs() {
   const influencerTabs = document.getElementById('influencerTabs');
   const typeTabs = document.getElementById('typeTabs');
   if (!influencerTabs || !typeTabs) return;
   const clips = buildClipGroups();
   const influencers = ['all', ...clips.map(c => c.influencer)];
-  const types = ['all', ...new Set(STN_PRODUCTS.map(p => productType(p.name)))];
+  const types = ['all', ...new Set(ACTIVE_PRODUCTS.map(p => productType(p.name)))];
   const label = v => v === 'all' ? '전체' : v;
   influencerTabs.innerHTML = influencers.map(v => `<button class="tab" type="button" data-filter-kind="influencer" data-value="${v}" aria-selected="${activeInfluencer === v}">${label(v)}</button>`).join('');
   typeTabs.innerHTML = types.map(v => `<button class="tab small-tab" type="button" data-filter-kind="type" data-value="${v}" aria-selected="${activeType === v}">${label(v)}</button>`).join('');
 }
 
-function render(){
+function render() {
   renderFilterTabs();
   const rows = getFilteredClips();
   feed.innerHTML = rows.length ? rows.map(clipCard).join('') : '<p class="notice">검색 결과가 없습니다.</p>';
 }
 
-function copyClipLink(clipId){
+function copyClipLink(clipId) {
   const clip = buildClipGroups().find(c => c.id === clipId);
   const params = new URLSearchParams({
-    aff:currentCode,
-    clip:clipId,
-    utm_source:'instagram',
-    utm_medium:'affiliate',
-    utm_campaign:(clip && clip.campaign) || 'grvn_shortform_commerce',
-    utm_content:`${currentCode.toLowerCase()}_${clipId}`
+    aff: currentCode,
+    clip: clipId,
+    utm_source: 'instagram',
+    utm_medium: 'affiliate',
+    utm_campaign: (clip && clip.campaign) || 'grvn_shortform_commerce',
+    utm_content: `${currentCode.toLowerCase()}_${clipId}`
   });
-  const url = `${location.origin}${location.pathname.replace(/index\.html$/,'')}index.html?${params.toString()}`;
-  navigator.clipboard?.writeText(url).then(()=>toast('영상 캠페인 링크가 복사되었습니다.')).catch(()=>prompt('링크를 복사하세요', url));
+  const url = `${location.origin}${location.pathname.replace(/index\.html$/, '')}index.html?${params.toString()}`;
+  navigator.clipboard?.writeText(url).then(() => toast('영상 캠페인 링크가 복사되었습니다.')).catch(() => prompt('링크를 복사하세요', url));
 }
 
-document.addEventListener('click', e=>{
+document.addEventListener('click', e => {
   const tab = e.target.closest('[data-filter-kind]');
-  if(tab){
-    if(tab.dataset.filterKind === 'influencer') activeInfluencer = tab.dataset.value;
-    if(tab.dataset.filterKind === 'type') activeType = tab.dataset.value;
+  if (tab) {
+    if (tab.dataset.filterKind === 'influencer') activeInfluencer = tab.dataset.value;
+    if (tab.dataset.filterKind === 'type') activeType = tab.dataset.value;
     render();
     return;
   }
   const open = e.target.closest('[data-open]');
   const share = e.target.closest('[data-share]');
   const copyClip = e.target.closest('[data-copy-clip]');
-  if(open) openProduct(open.dataset.open, open.dataset.clip);
-  if(share) copyProductLink(share.dataset.share, share.dataset.clip);
-  if(copyClip) copyClipLink(copyClip.dataset.copyClip);
+  if (open) openProduct(open.dataset.open, open.dataset.clip);
+  if (share) copyProductLink(share.dataset.share, share.dataset.clip);
+  if (copyClip) copyClipLink(copyClip.dataset.copyClip);
 });
 search?.addEventListener('input', render);
 
@@ -178,4 +272,9 @@ if (clipFromUrl) {
   const found = buildClipGroups().find(c => c.id === clipFromUrl);
   if (found) activeInfluencer = found.influencer;
 }
-render();
+async function initShop() {
+  await loadProductsFromApi();
+  render();
+}
+
+initShop();
