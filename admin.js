@@ -88,7 +88,9 @@ async function fetchAdminProductsFromApi() {
 
     if (data && data.success && Array.isArray(data.products)) {
       console.log('[GRVN ADMIN] API 상품 목록 로딩 성공:', data.products.length);
-      return data.products.map(normalizeApiProduct);
+      return data.products
+        .filter(p => p.status !== 'inactive')
+        .map(normalizeApiProduct);
     }
   } catch (err) {
     console.warn('[GRVN ADMIN] API 상품 목록 로딩 실패. localStorage 사용:', err);
@@ -118,6 +120,36 @@ async function saveAdminProductToApi(product) {
 
   if (!res.ok || !data.success) {
     throw new Error(data.detail || data.error || '상품 API 저장 실패');
+  }
+
+  return data.product;
+}
+
+async function inactiveAdminProductToApi(productId) {
+  const apiBase = getApiBase();
+
+  if (!apiBase) {
+    throw new Error('GRVN_API_BASE가 없습니다.');
+  }
+
+  if (!productId) {
+    throw new Error('비활성화할 상품 ID가 없습니다.');
+  }
+
+  const res = await fetch(`${apiBase}/api/admin/products/inactive`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      slug: productId
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    throw new Error(data.detail || data.error || '상품 비활성화 API 실패');
   }
 
   return data.product;
@@ -292,19 +324,86 @@ async function saveProduct(e) {
     alert(err.message || '저장 중 오류가 발생했습니다.');
   }
 }
-function deleteProduct() {
-  const id = $('editingId').value;
-  if (!id) return showToast('삭제할 Admin 등록 상품을 먼저 선택하세요.');
-  const rows = readAdminProducts();
-  const target = rows.find(p => p.id === id);
-  if (!target) return showToast('기본 샘플 상품은 이 화면에서 삭제하지 않습니다.');
-  if (!confirm(`${target.name} 상품을 삭제할까요?`)) return;
-  writeAdminProducts(rows.filter(p => p.id !== id));
-  resetForm();
-  renderList();
-  updateExport();
-  showToast('상품이 삭제되었습니다.');
+async function deleteProduct() {
+  let id = $('editingId')?.value?.trim() || '';
+  let target = null;
+
+  if (id) {
+    target = allProducts().find(p => {
+      const key = p.slug || p.id;
+      return key === id || p.id === id || p.slug === id;
+    });
+  }
+
+  // 복사 등록 상태처럼 editingId가 비어 있어도,
+  // 현재 폼에 들어있는 상품 정보로 비활성화 대상을 찾습니다.
+  if (!target) {
+    try {
+      const formProduct = getFormData();
+      const formKey = formProduct.slug || formProduct.id;
+
+      if (formKey) {
+        id = formKey;
+        target = allProducts().find(p => {
+          const key = p.slug || p.id;
+          return key === formKey || p.id === formKey || p.slug === formKey;
+        }) || formProduct;
+      }
+    } catch (err) {
+      console.warn('[GRVN ADMIN] 현재 폼 상품 정보 확인 실패:', err);
+    }
+  }
+
+  if (!id && !target) {
+    return showToast('비활성화할 상품을 먼저 선택하거나, 복사 등록 후 상품 정보가 채워져 있어야 합니다.');
+  }
+
+  const productKey = target?.slug || target?.id || id;
+  const productName = target?.name || productKey;
+
+  if (!productKey) {
+    return showToast('비활성화할 상품 ID를 찾을 수 없습니다.');
+  }
+
+  if (!confirm(`${productName} 상품을 비활성화할까요?\n\n비활성화하면 메인/상세 API에서는 노출되지 않고, Supabase DB에는 기록이 남습니다.`)) {
+    return;
+  }
+
+  try {
+    await inactiveAdminProductToApi(productKey);
+
+    showToast('상품이 Supabase DB에서 비활성화되었습니다.');
+
+    API_PRODUCTS = await fetchAdminProductsFromApi();
+
+    resetForm();
+    renderList();
+    updateExport();
+  } catch (apiErr) {
+    console.warn('[GRVN ADMIN] API 비활성화 실패. localStorage 삭제로 fallback:', apiErr);
+
+    const rows = readAdminProducts();
+    const existsLocal = rows.some(p => {
+      const key = p.slug || p.id;
+      return key === productKey || p.id === productKey || p.slug === productKey;
+    });
+
+    if (!existsLocal) {
+      return alert(apiErr.message || '상품 비활성화 중 오류가 발생했습니다.');
+    }
+
+    writeAdminProducts(rows.filter(p => {
+      const key = p.slug || p.id;
+      return key !== productKey && p.id !== productKey && p.slug !== productKey;
+    }));
+
+    resetForm();
+    renderList();
+    updateExport();
+    showToast('API 비활성화 실패로 localStorage 상품만 삭제했습니다.');
+  }
 }
+
 function openLanding() {
   let p;
   try { p = getFormData(); validateProduct(p); }
