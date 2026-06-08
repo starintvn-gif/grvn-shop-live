@@ -1,81 +1,225 @@
-const product = getProduct(qs('product'));
+let product = getProduct(qs('product'));
 const code = getActiveCode();
 const qtyInput = document.getElementById('qtyInput');
 const optionSelect = document.getElementById('optionSelect');
 
-document.getElementById('productTitle').textContent = product.name;
-document.getElementById('productDesc').textContent = `${product.brand} · ${product.desc}`;
-document.getElementById('priceText').textContent = money(product.price);
-const originalPriceEl = document.getElementById('originalPriceText');
-if (originalPriceEl && product.originalPrice) originalPriceEl.textContent = `정상가 ${money(product.originalPrice)}`;
-document.getElementById('affCode').textContent = code;
-const landingVideo = document.getElementById('landingVideo');
-landingVideo.src = product.video;
-landingVideo.addEventListener('error', () => {
-  console.warn('Video failed to load:', product.video);
-  landingVideo.poster = product.detailImage || '';
-});
-const detailImage = document.getElementById('detailImage');
-if (detailImage && product.detailImage) {
-  detailImage.src = product.detailImage;
-  detailImage.alt = `${product.brand} ${product.name} 상세페이지 이미지`;
-  detailImage.addEventListener('error', () => {
-    detailImage.src = 'assets/salon_detail_page.jpg';
-    const caption = document.getElementById('detailCaption');
-    if (caption) caption.textContent = '상세 이미지 파일을 찾지 못해 기본 상세 이미지로 표시합니다. assets/detail_pages 경로를 확인하세요.';
-  });
-}
-document.title = `${product.name} / GRVN Affiliate Landing`;
-const clipId = qs('clip') || product.defaultClip || 'stn-shortform';
-const setText = (id, value) => { const el = document.getElementById(id); if(el) el.textContent = value; };
-setText('detailCat1', product.category);
-setText('detailBrand', product.brand);
-setText('specBrand', product.brand);
-setText('specCategory', product.category);
-setText('specProductId', product.id);
-setText('specSourceCode', product.sourceProductCode || '-');
-setText('specOriginalPrice', product.originalPrice ? money(product.originalPrice) : '-');
-setText('specBenefitPrice', product.price ? money(product.price) : '-');
-setText('specBenefitRate', product.benefitRate ? `${product.benefitRate}%` : '-');
-setText('specClipId', clipId);
-setText('specCommission', `${Math.round(product.commission * 100)}%`);
-optionSelect.innerHTML = product.options.map(o=>`<option>${o}</option>`).join('');
-// External mall links are intentionally not exposed on the customer landing page.
-// The product detail image and checkout flow stay inside GRVN.
-const detailCaption = document.getElementById('detailCaption');
-if (detailCaption) detailCaption.textContent = `${product.defaultInfluencer || '인플루언서'} 영상 속 LOOK 상품입니다. ${product.name} 상세 이미지가 GRVN 내부에 직접 표시되며, 옵션 선택 후 이 페이지에서 바로 결제합니다.`;
+function getStaticProducts() {
+  if (Array.isArray(window.STN_PRODUCTS)) {
+    return window.STN_PRODUCTS;
+  }
 
-function updateSummary(){
-  const qty = Math.max(1, Number(qtyInput.value)||1);
+  if (typeof STN_PRODUCTS !== 'undefined' && Array.isArray(STN_PRODUCTS)) {
+    return STN_PRODUCTS;
+  }
+
+  return [];
+}
+
+function normalizeApiProduct(apiProduct, fallbackProduct) {
+  if (!apiProduct) {
+    return fallbackProduct;
+  }
+
+  const fallback = fallbackProduct || {};
+
+  return {
+    ...fallback,
+    ...apiProduct,
+
+    // 기존 프론트에서 사용하는 필드명 유지
+    id: fallback.id || apiProduct.slug || apiProduct.id,
+    slug: apiProduct.slug || fallback.slug || fallback.id,
+    name: apiProduct.name || fallback.name,
+    brand: apiProduct.brand || fallback.brand,
+    category: apiProduct.category || fallback.category,
+
+    // Supabase 컬럼명과 기존 프론트 필드명 연결
+    originalPrice: apiProduct.original_price ?? fallback.originalPrice,
+    price: apiProduct.price ?? fallback.price,
+    detailImage: apiProduct.detail_image_url || fallback.detailImage,
+    thumbnail: apiProduct.thumbnail_url || fallback.thumbnail,
+    desc: apiProduct.description || fallback.desc,
+
+    // 상세페이지/영상/결제 로직에 필요한 기존 필드는 유지
+    video: fallback.video,
+    defaultClip: fallback.defaultClip,
+    defaultInfluencer: fallback.defaultInfluencer,
+    defaultAffiliate: fallback.defaultAffiliate,
+    campaign: fallback.campaign,
+    options: fallback.options || ['FREE'],
+    commission: fallback.commission ?? 0.3,
+    benefitRate: fallback.benefitRate,
+    sourceProductCode: fallback.sourceProductCode
+  };
+}
+
+async function loadProductDetailFromApi(slugOrId, fallbackProduct) {
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    '';
+
+  if (!apiBase || !slugOrId) {
+    console.log('[GRVN] 상품 상세 API base 없음. data.js 상품 사용');
+    return fallbackProduct;
+  }
+
+  try {
+    const res = await fetch(`${apiBase}/api/products/${encodeURIComponent(slugOrId)}`);
+
+    if (!res.ok) {
+      throw new Error(`Product detail API failed: ${res.status}`);
+    }
+
+    const data = await res.json();
+
+    if (data && data.success && data.product) {
+      console.log('[GRVN] API 상품 상세 로딩 성공:', data.product.slug || data.product.id);
+      return normalizeApiProduct(data.product, fallbackProduct);
+    }
+  } catch (err) {
+    console.warn('[GRVN] 상품 상세 API 연결 실패. data.js 상품 사용:', err);
+  }
+
+  return fallbackProduct;
+}
+
+function renderProductPage(product) {
+  if (!product) {
+    toast('상품 정보를 찾을 수 없습니다.');
+    const title = document.getElementById('productTitle');
+    if (title) title.textContent = '상품 정보를 찾을 수 없습니다.';
+    return;
+  }
+
+  document.getElementById('productTitle').textContent = product.name;
+  document.getElementById('productDesc').textContent = `${product.brand} · ${product.desc || ''}`;
+  document.getElementById('priceText').textContent = money(product.price);
+
+  const originalPriceEl = document.getElementById('originalPriceText');
+  if (originalPriceEl && product.originalPrice) {
+    originalPriceEl.textContent = `정상가 ${money(product.originalPrice)}`;
+  }
+
+  document.getElementById('affCode').textContent = code;
+
+  const landingVideo = document.getElementById('landingVideo');
+  if (landingVideo) {
+    landingVideo.src = product.video || '';
+    landingVideo.addEventListener('error', () => {
+      console.warn('Video failed to load:', product.video);
+      landingVideo.poster = product.detailImage || '';
+    });
+  }
+
+  const detailImage = document.getElementById('detailImage');
+  if (detailImage && product.detailImage) {
+    detailImage.src = product.detailImage;
+    detailImage.alt = `${product.brand} ${product.name} 상세페이지 이미지`;
+    detailImage.addEventListener('error', () => {
+      detailImage.src = 'assets/salon_detail_page.jpg';
+      const caption = document.getElementById('detailCaption');
+      if (caption) {
+        caption.textContent = '상세 이미지 파일을 찾지 못해 기본 상세 이미지로 표시합니다. assets/detail_pages 경로를 확인하세요.';
+      }
+    });
+  }
+
+  document.title = `${product.name} / GRVN Affiliate Landing`;
+
+  const clipId = qs('clip') || product.defaultClip || 'stn-shortform';
+  const setText = (id, value) => {
+    const el = document.getElementById(id);
+    if (el) el.textContent = value;
+  };
+
+  setText('detailCat1', product.category);
+  setText('detailBrand', product.brand);
+  setText('specBrand', product.brand);
+  setText('specCategory', product.category);
+  setText('specProductId', product.id);
+  setText('specSourceCode', product.sourceProductCode || '-');
+  setText('specOriginalPrice', product.originalPrice ? money(product.originalPrice) : '-');
+  setText('specBenefitPrice', product.price ? money(product.price) : '-');
+  setText('specBenefitRate', product.benefitRate ? `${product.benefitRate}%` : '-');
+  setText('specClipId', clipId);
+  setText('specCommission', `${Math.round((product.commission || 0.3) * 100)}%`);
+
+  if (optionSelect) {
+    const options = Array.isArray(product.options) && product.options.length
+      ? product.options
+      : ['FREE'];
+    optionSelect.innerHTML = options.map(o => `<option>${o}</option>`).join('');
+  }
+
+  const detailCaption = document.getElementById('detailCaption');
+  if (detailCaption) {
+    detailCaption.textContent = `${product.defaultInfluencer || '인플루언서'} 영상 속 LOOK 상품입니다. ${product.name} 상세 이미지가 GRVN 내부에 직접 표시되며, 옵션 선택 후 이 페이지에서 바로 결제합니다.`;
+  }
+
+  updateSummary();
+}
+
+function updateSummary() {
+  if (!product) return;
+
+  const qty = Math.max(1, Number(qtyInput.value) || 1);
   const subtotal = product.price * qty;
-  const commission = Math.round(subtotal * product.commission);
+  const commission = Math.round(subtotal * (product.commission || 0.3));
+
   document.getElementById('subtotal').textContent = money(subtotal);
   document.getElementById('commission').textContent = money(commission);
   document.getElementById('total').textContent = money(subtotal);
 }
-qtyInput.addEventListener('input', updateSummary);
-updateSummary();
 
-document.getElementById('checkoutBtn').addEventListener('click', ()=>{
-  const qty = Math.max(1, Number(qtyInput.value)||1);
+if (qtyInput) {
+  qtyInput.addEventListener('input', updateSummary);
+}
+
+document.getElementById('checkoutBtn').addEventListener('click', () => {
+  if (!product) {
+    toast('상품 정보를 찾을 수 없습니다.');
+    return;
+  }
+
+  const clipId = qs('clip') || product.defaultClip || 'stn-shortform';
+  const qty = Math.max(1, Number(qtyInput.value) || 1);
   const amount = product.price * qty;
-  const commission = Math.round(amount * product.commission);
+  const commission = Math.round(amount * (product.commission || 0.3));
+
   stnLog({
-    type:'order',
-    event:'checkout_test_completed',
-    productId:product.id,
-    productName:product.name,
+    type: 'order',
+    event: 'checkout_test_completed',
+    productId: product.id,
+    productName: product.name,
     code,
     amount,
     qty,
     commission,
-    option:optionSelect.value,
-    campaign:product.campaign || qs('utm_campaign') || 'salondeseoul_cristine_tweed',
-    utm_source:qs('utm_source') || 'instagram',
-    utm_medium:qs('utm_medium') || 'affiliate',
-    utm_content:qs('utm_content') || clipId
+    option: optionSelect ? optionSelect.value : 'FREE',
+    campaign: product.campaign || qs('utm_campaign') || 'salondeseoul_cristine_tweed',
+    utm_source: qs('utm_source') || 'instagram',
+    utm_medium: qs('utm_medium') || 'affiliate',
+    utm_content: qs('utm_content') || clipId
   });
-  document.getElementById('completeText').textContent = `${code} 코드 기준으로 ${product.name} ${qty}개 주문, 매출 ${money(amount)}, 예상 수수료 ${money(commission)}가 기록되었습니다.`;
+
+  document.getElementById('completeText').textContent =
+    `${code} 코드 기준으로 ${product.name} ${qty}개 주문, 매출 ${money(amount)}, 예상 수수료 ${money(commission)}가 기록되었습니다.`;
+
   document.getElementById('complete').classList.add('show');
   toast('결제 테스트가 완료되었습니다. 인플 대시보드에 반영됩니다.');
 });
+
+async function initProductPage() {
+  const productKey = qs('product');
+  const fallbackProduct = product || getStaticProducts().find(p =>
+    p.id === productKey ||
+    p.slug === productKey
+  );
+
+  product = await loadProductDetailFromApi(productKey, fallbackProduct);
+  renderProductPage(product);
+}
+
+initProductPage();
