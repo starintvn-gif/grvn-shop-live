@@ -46,7 +46,9 @@ function normalizeApiProduct(apiProduct, fallbackProduct) {
     defaultInfluencer: fallback.defaultInfluencer,
     defaultAffiliate: fallback.defaultAffiliate,
     campaign: fallback.campaign,
-    options: fallback.options || ['FREE'],
+    options: Array.isArray(apiProduct.options) && apiProduct.options.length
+      ? apiProduct.options
+      : (fallback.options || ['FREE']),
     commission: fallback.commission ?? 0.3,
     benefitRate: fallback.benefitRate,
     sourceProductCode: fallback.sourceProductCode
@@ -83,6 +85,71 @@ async function loadProductDetailFromApi(slugOrId, fallbackProduct) {
   }
 
   return fallbackProduct;
+}
+
+function escapeHtml(value) {
+  return String(value ?? '')
+    .replaceAll('&', '&amp;')
+    .replaceAll('<', '&lt;')
+    .replaceAll('>', '&gt;')
+    .replaceAll('"', '&quot;')
+    .replaceAll("'", '&#039;');
+}
+
+function getOptionLabel(option) {
+  if (typeof option === 'string') {
+    return option;
+  }
+
+  const name = option.option_name || option.name || '옵션';
+  const value = option.option_value || option.value || '';
+  const addPrice = Number(option.additional_price || option.additionalPrice || 0);
+  const stock = option.stock !== undefined && option.stock !== null
+    ? Number(option.stock)
+    : null;
+
+  const priceText = addPrice > 0 ? ` / 추가 ${money(addPrice)}` : '';
+  const stockText = Number.isFinite(stock) ? ` / 재고 ${stock}` : '';
+
+  return `${name}${value ? ` - ${value}` : ''}${priceText}${stockText}`;
+}
+
+function getSelectedOption() {
+  if (!optionSelect || !product) {
+    return null;
+  }
+
+  const options = Array.isArray(product.options) && product.options.length
+    ? product.options
+    : ['FREE'];
+
+  const selectedIndex = Number(optionSelect.value);
+
+  if (Number.isInteger(selectedIndex) && options[selectedIndex]) {
+    return options[selectedIndex];
+  }
+
+  return options[0] || null;
+}
+
+function getSelectedOptionAdditionalPrice() {
+  const selected = getSelectedOption();
+
+  if (!selected || typeof selected === 'string') {
+    return 0;
+  }
+
+  return Number(selected.additional_price || selected.additionalPrice || 0);
+}
+
+function getSelectedOptionText() {
+  const selected = getSelectedOption();
+
+  if (!selected) {
+    return 'FREE';
+  }
+
+  return getOptionLabel(selected);
 }
 
 function renderProductPage(product) {
@@ -150,7 +217,13 @@ function renderProductPage(product) {
     const options = Array.isArray(product.options) && product.options.length
       ? product.options
       : ['FREE'];
-    optionSelect.innerHTML = options.map(o => `<option>${o}</option>`).join('');
+
+    optionSelect.innerHTML = options.map((option, index) => {
+      const label = getOptionLabel(option);
+      const disabled = typeof option !== 'string' && Number(option.stock) <= 0 ? ' disabled' : '';
+
+      return `<option value="${index}"${disabled}>${escapeHtml(label)}</option>`;
+    }).join('');
   }
 
   const detailCaption = document.getElementById('detailCaption');
@@ -165,7 +238,9 @@ function updateSummary() {
   if (!product) return;
 
   const qty = Math.max(1, Number(qtyInput.value) || 1);
-  const subtotal = product.price * qty;
+  const optionAdditionalPrice = getSelectedOptionAdditionalPrice();
+  const unitPrice = Number(product.price || 0) + optionAdditionalPrice;
+  const subtotal = unitPrice * qty;
   const commission = Math.round(subtotal * (product.commission || 0.3));
 
   document.getElementById('subtotal').textContent = money(subtotal);
@@ -177,6 +252,10 @@ if (qtyInput) {
   qtyInput.addEventListener('input', updateSummary);
 }
 
+if (optionSelect) {
+  optionSelect.addEventListener('change', updateSummary);
+}
+
 document.getElementById('checkoutBtn').addEventListener('click', () => {
   if (!product) {
     toast('상품 정보를 찾을 수 없습니다.');
@@ -185,7 +264,9 @@ document.getElementById('checkoutBtn').addEventListener('click', () => {
 
   const clipId = qs('clip') || product.defaultClip || 'stn-shortform';
   const qty = Math.max(1, Number(qtyInput.value) || 1);
-  const amount = product.price * qty;
+  const optionAdditionalPrice = getSelectedOptionAdditionalPrice();
+  const unitPrice = Number(product.price || 0) + optionAdditionalPrice;
+  const amount = unitPrice * qty;
   const commission = Math.round(amount * (product.commission || 0.3));
 
   stnLog({
@@ -197,7 +278,7 @@ document.getElementById('checkoutBtn').addEventListener('click', () => {
     amount,
     qty,
     commission,
-    option: optionSelect ? optionSelect.value : 'FREE',
+    option: getSelectedOptionText(),
     campaign: product.campaign || qs('utm_campaign') || 'salondeseoul_cristine_tweed',
     utm_source: qs('utm_source') || 'instagram',
     utm_medium: qs('utm_medium') || 'affiliate',
