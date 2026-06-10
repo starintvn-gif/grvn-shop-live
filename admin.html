@@ -81,8 +81,47 @@
             <label class="field">원본 상품 코드<input id="sourceProductCode" placeholder="예: 40B0005244" /></label>
             <label class="field wide">상품 설명<textarea id="desc" rows="4"
                 placeholder="상품/콘텐츠 설명을 입력하세요."></textarea></label>
-            <label class="field wide">옵션 목록<textarea id="options" rows="3"
-                placeholder="줄바꿈으로 옵션 입력&#10;예: FREE / BLACK&#10;예: S / M / L"></textarea></label>
+            <div class="field wide">
+              <label for="options">옵션 목록</label>
+
+              <!-- 기존 admin.js 호환용 숨김 textarea -->
+              <textarea id="options" rows="3" style="display:none" aria-hidden="true">기본 옵션 - 상세페이지 기준 옵션 선택</textarea>
+
+              <div class="option-admin-panel" style="display:grid;gap:12px;margin-top:10px">
+                <div id="optionRows" class="option-admin-rows" style="display:grid;gap:10px" aria-label="상품 옵션 입력 목록">
+                  <div class="option-row" data-option-row
+                    style="display:grid;grid-template-columns:1fr 1.4fr 0.8fr 0.8fr auto;gap:8px;align-items:end">
+                    <label class="field">옵션명
+                      <input type="text" data-option-name value="기본 옵션" placeholder="예: 컬러 / 사이즈 / 기본 옵션" />
+                    </label>
+
+                    <label class="field">옵션값
+                      <input type="text" data-option-value value="상세페이지 기준 옵션 선택"
+                        placeholder="예: 아이보리 / M / 상세페이지 기준 옵션 선택" />
+                    </label>
+
+                    <label class="field">추가금액
+                      <input type="number" data-option-price value="0" inputmode="numeric" placeholder="0" />
+                    </label>
+
+                    <label class="field">재고
+                      <input type="number" data-option-stock value="100" inputmode="numeric" placeholder="100" />
+                    </label>
+
+                    <button class="btn dark" type="button" data-remove-option style="min-width:72px">삭제</button>
+                  </div>
+                </div>
+
+                <div style="display:flex;gap:8px;flex-wrap:wrap">
+                  <button id="addOptionBtn" class="btn" type="button">옵션 추가</button>
+                  <button id="syncOptionTextBtn" class="btn dark" type="button">옵션 텍스트 반영</button>
+                </div>
+
+                <p class="muted" style="margin:0">
+                  옵션은 상품 저장 후 Supabase product_options 테이블에 연결됩니다. 예: 컬러/아이보리, 사이즈/M, 기본 옵션/상세페이지 기준 옵션 선택
+                </p>
+              </div>
+            </div>
           </div>
 
           <div class="form-title-row sub-row">
@@ -153,7 +192,7 @@
     window.GRVN_API_BASE = "https://api.grvn.shop";
   </script>
   <script src="/data.js?v=20260531-admin-mvp"></script>
-  <script src="/admin.js?v=20260608-inactive-v3"></script>
+  <script src="/admin.js?v=20260608-admin-options-v1"></script>
 </body>
 
 </html>
