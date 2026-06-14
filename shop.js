@@ -20,7 +20,80 @@ function getStaticProducts() {
 }
 
 let ACTIVE_PRODUCTS = getStaticProducts();
+function normalizeApiProductForShop(apiProduct, fallbackProduct = {}) {
+  const slug = apiProduct.slug || apiProduct.id || fallbackProduct.slug || fallbackProduct.id;
 
+  return {
+    ...fallbackProduct,
+    ...apiProduct,
+
+    id: slug,
+    slug,
+
+    name: apiProduct.name || fallbackProduct.name || '',
+    brand: apiProduct.brand || fallbackProduct.brand || '',
+    category: apiProduct.category || fallbackProduct.category || '상품',
+
+    originalPrice: apiProduct.original_price ?? fallbackProduct.originalPrice ?? 0,
+    price: apiProduct.price ?? fallbackProduct.price ?? 0,
+    stock: apiProduct.stock ?? fallbackProduct.stock ?? 100,
+    benefitRate: apiProduct.benefit_rate ?? fallbackProduct.benefitRate ?? (
+      apiProduct.original_price && apiProduct.price
+        ? Math.round((1 - apiProduct.price / apiProduct.original_price) * 100)
+        : 0
+    ),
+
+    thumbnail: apiProduct.thumbnail_url || fallbackProduct.thumbnail || apiProduct.detail_image_url || '',
+    detailImage: apiProduct.detail_image_url || fallbackProduct.detailImage || '',
+    video: apiProduct.video_url || fallbackProduct.video || '',
+
+    desc: apiProduct.description || fallbackProduct.desc || '',
+    tag: apiProduct.tag || fallbackProduct.tag || '',
+
+    defaultInfluencer:
+      apiProduct.default_influencer ||
+      fallbackProduct.defaultInfluencer ||
+      '인플루언서',
+
+    defaultAffiliate:
+      apiProduct.default_affiliate ||
+      fallbackProduct.defaultAffiliate ||
+      currentCode,
+
+    defaultClip:
+      apiProduct.default_clip ||
+      fallbackProduct.defaultClip ||
+      slug,
+
+    campaign:
+      apiProduct.campaign ||
+      fallbackProduct.campaign ||
+      'grvn_shortform_commerce',
+
+    sourceProductCode:
+      apiProduct.source_product_code ||
+      fallbackProduct.sourceProductCode ||
+      '',
+
+    sourceUrl:
+      apiProduct.source_url ||
+      fallbackProduct.sourceUrl ||
+      '',
+
+    commission: Number(apiProduct.commission ?? fallbackProduct.commission ?? 0.1),
+
+    isApiProduct: true
+  };
+}
+
+function findActiveProduct(id) {
+  const key = String(id || '');
+
+  return ACTIVE_PRODUCTS.find(product => {
+    const productKey = product.slug || product.id;
+    return productKey === key || product.id === key || product.slug === key;
+  }) || getProduct(id);
+}
 async function loadProductsFromApi() {
   const apiBase =
     window.GRVN_API_BASE ||
@@ -42,21 +115,23 @@ async function loadProductsFromApi() {
 
     const data = await res.json();
 
-    if (data && data.success && Array.isArray(data.products) && data.products.length > 0) {
+    if (data && data.success && Array.isArray(data.products)) {
       console.log('[GRVN] API 상품 로딩 성공:', data.products.length);
 
-      /*
-        지금은 Supabase 상품이 1개뿐이므로,
-        기존 상품 전체를 대체하지 않고 API 상품을 앞에 붙이는 방식으로 시작합니다.
-        나중에 DB에 20개 상품이 모두 들어가면 완전 대체로 바꿀 수 있습니다.
-      */
       const existing = getStaticProducts();
+      const map = new Map();
 
-      // 기존 data.js 상품을 기본값으로 유지합니다.
-      // 이유: 현재 영상/클립/인플루언서 연결 정보는 아직 data.js에 있기 때문입니다.
-      const merged = existing.map((oldProduct) => {
-        const matchedApiProduct = data.products.find((apiProduct) => {
-          const apiKey = apiProduct.slug || apiProduct.id;
+      existing.forEach(oldProduct => {
+        const key = oldProduct.slug || oldProduct.id;
+        if (!key) return;
+        map.set(key, oldProduct);
+      });
+
+      data.products.forEach(apiProduct => {
+        const apiKey = apiProduct.slug || apiProduct.id;
+        if (!apiKey) return;
+
+        const matchedStatic = existing.find(oldProduct => {
           const oldKey = oldProduct.slug || oldProduct.id;
 
           return (
@@ -66,28 +141,17 @@ async function loadProductsFromApi() {
           );
         });
 
-        if (!matchedApiProduct) {
-          return oldProduct;
-        }
-
-        return {
-          ...oldProduct,
-          ...matchedApiProduct,
-
-          // 화면 렌더링에 꼭 필요한 기존 프론트 필드는 유지합니다.
-          id: oldProduct.id || matchedApiProduct.slug || matchedApiProduct.id,
-          slug: matchedApiProduct.slug || oldProduct.slug || oldProduct.id,
-          video: oldProduct.video,
-          defaultClip: oldProduct.defaultClip,
-          defaultInfluencer: oldProduct.defaultInfluencer,
-          defaultAffiliate: oldProduct.defaultAffiliate,
-          campaign: oldProduct.campaign
-        };
+        const normalized = normalizeApiProductForShop(apiProduct, matchedStatic || {});
+        map.set(normalized.slug || normalized.id, normalized);
       });
 
-      // 아직 기존 data.js 상품과 매칭되지 않는 API 상품은 화면에 추가하지 않습니다.
-      // 이유: video/defaultClip 값이 없으면 /undefined 오류가 나기 때문입니다.
-      ACTIVE_PRODUCTS = merged;
+      ACTIVE_PRODUCTS = Array.from(map.values()).filter(product => {
+        const hasMedia = Boolean(product.video || product.defaultClip);
+        if (!hasMedia) {
+          console.warn('[GRVN] 영상/클립 정보 없는 상품은 메인에서 제외:', product);
+        }
+        return hasMedia;
+      });
     }
   } catch (err) {
     console.warn('[GRVN] 상품 API 연결 실패. data.js 상품 사용:', err);
@@ -146,7 +210,7 @@ function getFilteredClips() {
 }
 
 function openProduct(id, clipId) {
-  const item = getProduct(id);
+  const item = findActiveProduct(id);
   stnLog({ type: 'click', event: 'product_detail_click', productId: id, productName: item.name, code: currentCode, amount: 0, qty: 0, commission: 0, clip: clipId || item.defaultClip || 'stn-shortform' });
   const params = new URLSearchParams({
     product: id,
@@ -162,7 +226,7 @@ function openProduct(id, clipId) {
 }
 
 function copyProductLink(id, clipId) {
-  const item = getProduct(id);
+  const item = findActiveProduct(id);
   const params = new URLSearchParams({
     product: id,
     aff: currentCode,
@@ -223,7 +287,7 @@ function renderFilterTabs() {
   const typeTabs = document.getElementById('typeTabs');
   if (!influencerTabs || !typeTabs) return;
   const clips = buildClipGroups();
-  const influencers = ['all', ...clips.map(c => c.influencer)];
+  const influencers = ['all', ...new Set(clips.map(c => c.influencer).filter(Boolean))];
   const types = ['all', ...new Set(ACTIVE_PRODUCTS.map(p => productType(p.name)))];
   const label = v => v === 'all' ? '전체' : v;
   influencerTabs.innerHTML = influencers.map(v => `<button class="tab" type="button" data-filter-kind="influencer" data-value="${v}" aria-selected="${activeInfluencer === v}">${label(v)}</button>`).join('');
