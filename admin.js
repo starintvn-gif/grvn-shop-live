@@ -30,27 +30,36 @@ function normalizeApiProduct(apiProduct) {
     id: apiProduct.slug || apiProduct.id,
     slug: apiProduct.slug || apiProduct.id,
     supabaseId: apiProduct.id,
+
     category: apiProduct.category || '상품',
     brand: apiProduct.brand || '',
     name: apiProduct.name || '',
+
     originalPrice: apiProduct.original_price || 0,
     price: apiProduct.price || 0,
-    benefitRate: apiProduct.original_price && apiProduct.price
-      ? Math.round((1 - apiProduct.price / apiProduct.original_price) * 100)
-      : 0,
-    commission: 0.1,
-    tag: `${apiProduct.brand || ''} 캠페인`,
+    benefitRate: apiProduct.benefit_rate || (
+      apiProduct.original_price && apiProduct.price
+        ? Math.round((1 - apiProduct.price / apiProduct.original_price) * 100)
+        : 0
+    ),
+    commission: Number(apiProduct.commission ?? 0.1),
+
+    tag: apiProduct.tag || `${apiProduct.brand || ''} 캠페인`,
     desc: apiProduct.description || '',
     options: ['상세페이지 기준 옵션 선택'],
-    video: '',
+
+    video: apiProduct.video_url || '',
     detailImage: apiProduct.detail_image_url || '',
-    thumbnail: apiProduct.thumbnail_url || '',
-    sourceUrl: '',
-    sourceProductCode: '',
-    campaign: `${slugify(apiProduct.brand || 'grvn')}_affiliate_2026`,
-    defaultClip: '',
-    defaultInfluencer: '',
-    defaultAffiliate: '',
+    thumbnail: apiProduct.thumbnail_url || apiProduct.detail_image_url || '',
+
+    sourceUrl: apiProduct.source_url || '',
+    sourceProductCode: apiProduct.source_product_code || '',
+    campaign: apiProduct.campaign || `${slugify(apiProduct.brand || 'grvn')}_affiliate_2026`,
+
+    defaultClip: apiProduct.default_clip || '',
+    defaultInfluencer: apiProduct.default_influencer || '',
+    defaultAffiliate: apiProduct.default_affiliate || '',
+
     createdAt: apiProduct.created_at || '',
     updatedAt: apiProduct.created_at || '',
     isApiProduct: true
@@ -61,16 +70,31 @@ function toApiProductPayload(product) {
   return {
     id: product.supabaseId || product.id,
     slug: product.slug || product.id,
+
     category: product.category,
     brand: product.brand,
     name: product.name,
+
     originalPrice: product.originalPrice,
     price: product.price,
-    stock: 100,
-    thumbnail: product.detailImage,
+    stock: product.stock || 100,
+
+    thumbnail: product.thumbnail || product.detailImage,
     detailImage: product.detailImage,
+    videoUrl: product.video,
+
     desc: product.desc,
-    status: 'active'
+    status: 'active',
+
+    defaultInfluencer: product.defaultInfluencer,
+    defaultAffiliate: product.defaultAffiliate,
+    defaultClip: product.defaultClip,
+    campaign: product.campaign,
+    tag: product.tag,
+    sourceUrl: product.sourceUrl,
+    sourceProductCode: product.sourceProductCode,
+    commission: product.commission,
+    benefitRate: product.benefitRate
   };
 }
 

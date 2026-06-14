@@ -26,32 +26,38 @@ function normalizeApiProduct(apiProduct, fallbackProduct) {
     ...fallback,
     ...apiProduct,
 
-    // 기존 프론트에서 사용하는 필드명 유지
-    id: fallback.id || apiProduct.slug || apiProduct.id,
+    id: apiProduct.slug || fallback.id || apiProduct.id,
     slug: apiProduct.slug || fallback.slug || fallback.id,
+
     name: apiProduct.name || fallback.name,
     brand: apiProduct.brand || fallback.brand,
     category: apiProduct.category || fallback.category,
 
-    // Supabase 컬럼명과 기존 프론트 필드명 연결
     originalPrice: apiProduct.original_price ?? fallback.originalPrice,
     price: apiProduct.price ?? fallback.price,
-    detailImage: apiProduct.detail_image_url || fallback.detailImage,
+    stock: apiProduct.stock ?? fallback.stock,
+
     thumbnail: apiProduct.thumbnail_url || fallback.thumbnail,
+    detailImage: apiProduct.detail_image_url || fallback.detailImage,
+    video: apiProduct.video_url || apiProduct.video || fallback.video || '',
+
     desc: apiProduct.description || fallback.desc,
 
-    // 상세페이지/영상/결제 로직에 필요한 기존 필드는 유지
-    video: fallback.video,
-    defaultClip: fallback.defaultClip,
-    defaultInfluencer: fallback.defaultInfluencer,
-    defaultAffiliate: fallback.defaultAffiliate,
-    campaign: fallback.campaign,
+    defaultClip: apiProduct.default_clip || fallback.defaultClip || 'stn-shortform',
+    defaultInfluencer: apiProduct.default_influencer || fallback.defaultInfluencer || '',
+    defaultAffiliate: apiProduct.default_affiliate || fallback.defaultAffiliate || '',
+    campaign: apiProduct.campaign || fallback.campaign,
+    tag: apiProduct.tag || fallback.tag,
+
+    sourceProductCode: apiProduct.source_product_code || fallback.sourceProductCode,
+    sourceUrl: apiProduct.source_url || fallback.sourceUrl,
+
+    commission: Number(apiProduct.commission ?? fallback.commission ?? 0.3),
+    benefitRate: apiProduct.benefit_rate ?? fallback.benefitRate,
+
     options: Array.isArray(apiProduct.options) && apiProduct.options.length
       ? apiProduct.options
-      : (fallback.options || ['FREE']),
-    commission: fallback.commission ?? 0.3,
-    benefitRate: fallback.benefitRate,
-    sourceProductCode: fallback.sourceProductCode
+      : (fallback.options || ['FREE'])
   };
 }
 
