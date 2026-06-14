@@ -26,38 +26,32 @@ function normalizeApiProduct(apiProduct, fallbackProduct) {
     ...fallback,
     ...apiProduct,
 
-    id: apiProduct.slug || fallback.id || apiProduct.id,
+    // 기존 프론트에서 사용하는 필드명 유지
+    id: fallback.id || apiProduct.slug || apiProduct.id,
     slug: apiProduct.slug || fallback.slug || fallback.id,
-
     name: apiProduct.name || fallback.name,
     brand: apiProduct.brand || fallback.brand,
     category: apiProduct.category || fallback.category,
 
+    // Supabase 컬럼명과 기존 프론트 필드명 연결
     originalPrice: apiProduct.original_price ?? fallback.originalPrice,
     price: apiProduct.price ?? fallback.price,
-    stock: apiProduct.stock ?? fallback.stock,
-
-    thumbnail: apiProduct.thumbnail_url || fallback.thumbnail,
     detailImage: apiProduct.detail_image_url || fallback.detailImage,
-    video: apiProduct.video_url || apiProduct.video || fallback.video || '',
-
+    thumbnail: apiProduct.thumbnail_url || fallback.thumbnail,
     desc: apiProduct.description || fallback.desc,
 
-    defaultClip: apiProduct.default_clip || fallback.defaultClip || 'stn-shortform',
+    // 상세페이지/영상/결제 로직에 필요한 필드 연결
+    video: apiProduct.video_url || apiProduct.video || fallback.video || '',
+    defaultClip: apiProduct.default_clip || fallback.defaultClip || apiProduct.slug || fallback.id || 'stn-shortform',
     defaultInfluencer: apiProduct.default_influencer || fallback.defaultInfluencer || '',
-    defaultAffiliate: apiProduct.default_affiliate || fallback.defaultAffiliate || '',
-    campaign: apiProduct.campaign || fallback.campaign,
-    tag: apiProduct.tag || fallback.tag,
-
-    sourceProductCode: apiProduct.source_product_code || fallback.sourceProductCode,
-    sourceUrl: apiProduct.source_url || fallback.sourceUrl,
-
-    commission: Number(apiProduct.commission ?? fallback.commission ?? 0.3),
-    benefitRate: apiProduct.benefit_rate ?? fallback.benefitRate,
-
+    defaultAffiliate: apiProduct.default_affiliate || fallback.defaultAffiliate || code,
+    campaign: apiProduct.campaign || fallback.campaign || 'grvn_shortform_commerce',
     options: Array.isArray(apiProduct.options) && apiProduct.options.length
       ? apiProduct.options
-      : (fallback.options || ['FREE'])
+      : (fallback.options || ['FREE']),
+    commission: Number(apiProduct.commission ?? fallback.commission ?? 0.3),
+    benefitRate: apiProduct.benefit_rate ?? fallback.benefitRate,
+    sourceProductCode: apiProduct.source_product_code || fallback.sourceProductCode || ''
   };
 }
 
@@ -91,6 +85,51 @@ async function loadProductDetailFromApi(slugOrId, fallbackProduct) {
   }
 
   return fallbackProduct;
+}
+
+async function createPendingOrder(product, selectedOption, qty = 1) {
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    'https://api.grvn.shop';
+
+  const productSlug = product.slug || product.id;
+
+  const payload = {
+    product_slug: productSlug,
+    option_name: selectedOption?.option_name || selectedOption?.optionName || '기본 옵션',
+    option_value: selectedOption?.option_value || selectedOption?.optionValue || selectedOption?.value || '상세페이지 기준 옵션 선택',
+    qty: Number(qty || 1),
+
+    ref_code: getActiveCode ? getActiveCode() : (localStorage.getItem('stn_last_aff') || 'GRVN'),
+    influencer_name: product.defaultInfluencer || product.default_influencer || '',
+
+    buyer_name: '테스트',
+    buyer_phone: '01000000000',
+    buyer_email: 'test@example.com',
+
+    page_url: location.href
+  };
+
+  const res = await fetch(`${apiBase}/api/orders`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify(payload)
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    console.error('[GRVN] 주문 생성 실패:', data);
+    alert('주문 생성에 실패했습니다. 콘솔을 확인해주세요.');
+    return null;
+  }
+
+  console.log('[GRVN] 주문 생성 성공:', data);
+  return data;
 }
 
 function escapeHtml(value) {
@@ -262,40 +301,60 @@ if (optionSelect) {
   optionSelect.addEventListener('change', updateSummary);
 }
 
-document.getElementById('checkoutBtn').addEventListener('click', () => {
+document.getElementById('checkoutBtn').addEventListener('click', async () => {
   if (!product) {
     toast('상품 정보를 찾을 수 없습니다.');
     return;
   }
 
+  const checkoutBtn = document.getElementById('checkoutBtn');
   const clipId = qs('clip') || product.defaultClip || 'stn-shortform';
   const qty = Math.max(1, Number(qtyInput.value) || 1);
+
+  const selectedOption = getSelectedOption();
   const optionAdditionalPrice = getSelectedOptionAdditionalPrice();
   const unitPrice = Number(product.price || 0) + optionAdditionalPrice;
   const amount = unitPrice * qty;
   const commission = Math.round(amount * (product.commission || 0.3));
 
+  if (checkoutBtn) {
+    checkoutBtn.disabled = true;
+    checkoutBtn.textContent = '주문 생성 중...';
+  }
+
+  const orderResult = await createPendingOrder(product, selectedOption, qty);
+
+  if (checkoutBtn) {
+    checkoutBtn.disabled = false;
+    checkoutBtn.textContent = '주문 생성 테스트 / 주문번호 발급';
+  }
+
+  if (!orderResult || !orderResult.success) {
+    return;
+  }
+
   stnLog({
     type: 'order',
-    event: 'checkout_test_completed',
-    productId: product.id,
+    event: 'order_created',
+    productId: product.slug || product.id,
     productName: product.name,
-    code,
-    amount,
+    code: orderResult.summary?.ref_code || code,
+    amount: orderResult.summary?.payment_total || amount,
     qty,
-    commission,
+    commission: orderResult.summary?.commission_amount || commission,
+    order_no: orderResult.summary?.order_no,
     option: getSelectedOptionText(),
-    campaign: product.campaign || qs('utm_campaign') || 'salondeseoul_cristine_tweed',
+    campaign: product.campaign || qs('utm_campaign') || 'grvn_order_test',
     utm_source: qs('utm_source') || 'instagram',
     utm_medium: qs('utm_medium') || 'affiliate',
     utm_content: qs('utm_content') || clipId
   });
 
   document.getElementById('completeText').textContent =
-    `${code} 코드 기준으로 ${product.name} ${qty}개 주문, 매출 ${money(amount)}, 예상 수수료 ${money(commission)}가 기록되었습니다.`;
+    `주문번호 ${orderResult.summary.order_no}가 생성되었습니다. ${code} 코드 기준으로 ${product.name} ${qty}개 주문, 결제 예정금액 ${money(orderResult.summary.payment_total || amount)}, 예상 수수료 ${money(orderResult.summary.commission_amount || commission)}가 orders / order_items DB에 기록되었습니다.`;
 
   document.getElementById('complete').classList.add('show');
-  toast('결제 테스트가 완료되었습니다. 인플 대시보드에 반영됩니다.');
+  toast('주문번호가 생성되었습니다. Supabase orders / order_items를 확인하세요.');
 });
 
 async function initProductPage() {
