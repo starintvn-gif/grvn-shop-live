@@ -2,7 +2,15 @@ let product = getProduct(qs('product'));
 const code = getActiveCode();
 const qtyInput = document.getElementById('qtyInput');
 const optionSelect = document.getElementById('optionSelect');
+const PORTONE_STORE_ID =
+  window.PORTONE_STORE_ID ||
+  localStorage.getItem('portone_store_id') ||
+  'store-bdb776f3-6865-408d-919d-5c0f31a01e71';
 
+const PORTONE_CHANNEL_KEY =
+  window.PORTONE_CHANNEL_KEY ||
+  localStorage.getItem('portone_channel_key') ||
+  'channel-key-28fb4e35-d43a-4c69-a899-5b84779327fb';
 function getStaticProducts() {
   if (Array.isArray(window.STN_PRODUCTS)) {
     return window.STN_PRODUCTS;
@@ -129,6 +137,96 @@ async function createPendingOrder(product, selectedOption, qty = 1) {
   }
 
   console.log('[GRVN] 주문 생성 성공:', data);
+  return data;
+}
+
+async function requestPortOnePayment(orderResult, product, selectedOption, qty) {
+  if (!window.PortOne) {
+    alert('PortOne SDK를 불러오지 못했습니다. product-landing.html의 SDK script를 확인하세요.');
+    return null;
+  }
+
+  if (!PORTONE_STORE_ID || PORTONE_STORE_ID.includes('여기에_')) {
+    alert('PortOne Store ID가 설정되지 않았습니다.');
+    return null;
+  }
+
+  if (!PORTONE_CHANNEL_KEY || PORTONE_CHANNEL_KEY.includes('여기에_')) {
+    alert('PortOne Channel Key가 설정되지 않았습니다.');
+    return null;
+  }
+
+  const orderNo = orderResult.summary?.order_no || orderResult.order?.order_no;
+  const totalAmount = Number(orderResult.summary?.payment_total || 0);
+
+  if (!orderNo || !totalAmount) {
+    alert('주문번호 또는 결제금액이 없습니다.');
+    console.error('[GRVN] PortOne 결제 요청 불가:', orderResult);
+    return null;
+  }
+
+  const paymentId = orderNo;
+
+  const response = await PortOne.requestPayment({
+    storeId: PORTONE_STORE_ID,
+    channelKey: PORTONE_CHANNEL_KEY,
+    paymentId,
+    orderName: product.name,
+    totalAmount,
+    currency: 'CURRENCY_KRW',
+    payMethod: 'CARD',
+    customer: {
+      fullName: '테스트',
+      phoneNumber: '01000000000',
+      email: 'test@example.com'
+    }
+  });
+
+  if (response.code !== undefined) {
+    console.error('[GRVN] PortOne 결제 실패:', response);
+    alert(response.message || '결제가 취소 또는 실패되었습니다.');
+    return null;
+  }
+
+  console.log('[GRVN] PortOne 결제창 응답:', response);
+
+  return {
+    paymentId,
+    response
+  };
+}
+
+async function verifyPortOnePayment(orderResult, portoneResult) {
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    'https://api.grvn.shop';
+
+  const orderNo = orderResult.summary?.order_no || orderResult.order?.order_no;
+  const paymentId = portoneResult.paymentId;
+
+  const res = await fetch(`${apiBase}/api/payments/verify`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json'
+    },
+    body: JSON.stringify({
+      order_no: orderNo,
+      payment_id: paymentId,
+      portone_response: portoneResult.response
+    })
+  });
+
+  const data = await res.json();
+
+  if (!res.ok || !data.success) {
+    console.error('[GRVN] 결제 검증 실패:', data);
+    alert('결제는 완료되었을 수 있으나, 서버 검증에 실패했습니다. 관리자 확인이 필요합니다.');
+    return null;
+  }
+
+  console.log('[GRVN] 결제 검증 성공:', data);
   return data;
 }
 
@@ -324,37 +422,66 @@ document.getElementById('checkoutBtn').addEventListener('click', async () => {
 
   const orderResult = await createPendingOrder(product, selectedOption, qty);
 
-  if (checkoutBtn) {
-    checkoutBtn.disabled = false;
-    checkoutBtn.textContent = '주문 생성 테스트 / 주문번호 발급';
+  if (!orderResult || !orderResult.success) {
+    if (checkoutBtn) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.textContent = '구매하기';
+    }
+    return;
   }
 
-  if (!orderResult || !orderResult.success) {
+  if (checkoutBtn) {
+    checkoutBtn.textContent = '결제창 여는 중...';
+  }
+
+  const portoneResult = await requestPortOnePayment(orderResult, product, selectedOption, qty);
+
+  if (!portoneResult) {
+    if (checkoutBtn) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.textContent = '구매하기';
+    }
+    return;
+  }
+
+  if (checkoutBtn) {
+    checkoutBtn.textContent = '결제 검증 중...';
+  }
+
+  const verifyResult = await verifyPortOnePayment(orderResult, portoneResult);
+
+  if (checkoutBtn) {
+    checkoutBtn.disabled = false;
+    checkoutBtn.textContent = '구매하기';
+  }
+
+  if (!verifyResult || !verifyResult.success) {
     return;
   }
 
   stnLog({
     type: 'order',
-    event: 'order_created',
+    event: 'payment_completed',
     productId: product.slug || product.id,
     productName: product.name,
-    code: orderResult.summary?.ref_code || code,
-    amount: orderResult.summary?.payment_total || amount,
+    code: verifyResult.order?.ref_code || orderResult.summary?.ref_code || code,
+    amount: verifyResult.order?.payment_total || amount,
     qty,
-    commission: orderResult.summary?.commission_amount || commission,
-    order_no: orderResult.summary?.order_no,
+    commission: verifyResult.order?.commission_amount || commission,
+    order_no: verifyResult.order?.order_no || orderResult.summary?.order_no,
+    payment_id: portoneResult.paymentId,
     option: getSelectedOptionText(),
-    campaign: product.campaign || qs('utm_campaign') || 'grvn_order_test',
+    campaign: product.campaign || qs('utm_campaign') || 'grvn_payment',
     utm_source: qs('utm_source') || 'instagram',
     utm_medium: qs('utm_medium') || 'affiliate',
     utm_content: qs('utm_content') || clipId
   });
 
   document.getElementById('completeText').textContent =
-    `주문번호 ${orderResult.summary.order_no}가 생성되었습니다. ${code} 코드 기준으로 ${product.name} ${qty}개 주문, 결제 예정금액 ${money(orderResult.summary.payment_total || amount)}, 예상 수수료 ${money(orderResult.summary.commission_amount || commission)}가 orders / order_items DB에 기록되었습니다.`;
+    `결제가 완료되었습니다. 주문번호 ${verifyResult.order.order_no}, 결제금액 ${money(verifyResult.order.payment_total)}가 정상 처리되었습니다.`;
 
   document.getElementById('complete').classList.add('show');
-  toast('주문번호가 생성되었습니다. Supabase orders / order_items를 확인하세요.');
+  toast('결제가 완료되었습니다.');
 });
 
 async function initProductPage() {
