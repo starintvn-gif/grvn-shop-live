@@ -121,10 +121,85 @@
         </div>
       </section>
     </section>
+    <section class="dashboard-card" id="influencerSalesSection">
+      <div class="dashboard-section-head">
+        <div>
+          <p class="eyebrow">SALES SUMMARY</p>
+          <h2>인플루언서 매출 현황</h2>
+          <p class="muted">결제완료 주문 기준으로 집계된 실제 매출 및 예상 수수료입니다.</p>
+        </div>
+      </div>
+
+      <div class="dashboard-sales-summary">
+        <div class="summary-box">
+          <span>내 코드</span>
+          <strong id="dashboardInfluencerCode">-</strong>
+        </div>
+        <div class="summary-box">
+          <span>결제완료 주문</span>
+          <strong id="dashboardPaidOrders">0</strong>
+        </div>
+        <div class="summary-box">
+          <span>총 매출</span>
+          <strong id="dashboardTotalSales">₩0</strong>
+        </div>
+        <div class="summary-box">
+          <span>예상 수수료</span>
+          <strong id="dashboardTotalCommission">₩0</strong>
+        </div>
+        <div class="summary-box">
+          <span>평균 주문금액</span>
+          <strong id="dashboardAverageOrder">₩0</strong>
+        </div>
+      </div>
+
+      <div class="dashboard-table-wrap">
+        <h3>최근 결제완료 주문</h3>
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>주문번호</th>
+              <th>상품명</th>
+              <th>결제금액</th>
+              <th>예상 수수료</th>
+              <th>주문일시</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardRecentOrdersBody">
+            <tr>
+              <td colspan="5">매출 데이터를 불러오는 중입니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="dashboard-table-wrap">
+        <h3>상품별 매출</h3>
+        <table class="dashboard-table">
+          <thead>
+            <tr>
+              <th>상품명</th>
+              <th>브랜드</th>
+              <th>주문수</th>
+              <th>매출</th>
+              <th>예상 수수료</th>
+            </tr>
+          </thead>
+          <tbody id="dashboardProductSalesBody">
+            <tr>
+              <td colspan="5">상품별 매출 데이터를 불러오는 중입니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script src="/data.js?v=20260529-urgent"></script>
-  <script src="/dashboard.js?v=20260529-urgent"></script>
+  <script>
+    window.GRVN_API_BASE = "https://api.grvn.shop";
+  </script>
+  <script src="/dashboard.js?v=20260617-influencer-sales-v1"></script>
 </body>
 
 </html>

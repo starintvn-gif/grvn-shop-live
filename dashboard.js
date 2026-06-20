@@ -338,3 +338,136 @@ $('bulkImportBtn')?.addEventListener('click', () => {
 
 /* ─── 초기 실행 ─────────────────────────────────────────────── */
 showDashboard();
+
+function dashboardMoney(value) {
+  return `₩${Number(value || 0).toLocaleString()}`;
+}
+
+function dashboardDate(value) {
+  if (!value) return '-';
+
+  try {
+    return new Date(value).toLocaleString('ko-KR');
+  } catch {
+    return value;
+  }
+}
+
+function getInfluencerCodeFromPage() {
+  const params = new URLSearchParams(window.location.search);
+
+  const fromUrl =
+    params.get('code') ||
+    params.get('aff') ||
+    params.get('ref_code') ||
+    params.get('coupon');
+
+  if (fromUrl) {
+    const code = String(fromUrl).trim().toUpperCase();
+    localStorage.setItem('grvn_influencer_code', code);
+    return code;
+  }
+
+  const saved =
+    localStorage.getItem('grvn_influencer_code') ||
+    localStorage.getItem('stn_last_aff');
+
+  if (saved) {
+    return String(saved).trim().toUpperCase();
+  }
+
+  return 'STN-_JOSOOAH01';
+}
+
+async function loadInfluencerSalesSummary() {
+  const code = getInfluencerCodeFromPage();
+
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    'https://api.grvn.shop';
+
+  let data;
+
+  try {
+    const res = await fetch(`${apiBase}/api/influencer/summary?code=${encodeURIComponent(code)}`);
+    data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || '인플루언서 매출 조회 실패');
+    }
+  } catch (err) {
+    console.error('[GRVN DASHBOARD] 인플루언서 매출 조회 실패:', err);
+    return;
+  }
+
+  console.log('[GRVN DASHBOARD] 인플루언서 매출 요약:', data);
+
+  renderInfluencerSalesSummary(data);
+}
+
+function setTextById(id, value) {
+  const el = document.getElementById(id);
+  if (el) el.textContent = value;
+}
+
+function renderInfluencerSalesSummary(data) {
+  const summary = data.summary || {};
+  const orders = Array.isArray(data.orders) ? data.orders : [];
+  const products = Array.isArray(data.products) ? data.products : [];
+
+  setTextById('dashboardInfluencerCode', data.code || '-');
+  setTextById('dashboardPaidOrders', summary.paid_orders || 0);
+  setTextById('dashboardTotalSales', dashboardMoney(summary.total_sales || 0));
+  setTextById('dashboardTotalCommission', dashboardMoney(summary.total_commission || 0));
+  setTextById('dashboardAverageOrder', dashboardMoney(summary.average_order_amount || 0));
+
+  const recentOrdersBody = document.getElementById('dashboardRecentOrdersBody');
+
+  if (recentOrdersBody) {
+    if (!orders.length) {
+      recentOrdersBody.innerHTML = `
+        <tr>
+          <td colspan="5">아직 결제완료 주문이 없습니다.</td>
+        </tr>
+      `;
+    } else {
+      recentOrdersBody.innerHTML = orders.map((order) => `
+        <tr>
+          <td><strong>${order.order_no || '-'}</strong></td>
+          <td>${order.product_name || '-'}</td>
+          <td>${dashboardMoney(order.payment_total || 0)}</td>
+          <td>${dashboardMoney(order.commission_amount || 0)}</td>
+          <td>${dashboardDate(order.created_at)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+
+  const productSalesBody = document.getElementById('dashboardProductSalesBody');
+
+  if (productSalesBody) {
+    if (!products.length) {
+      productSalesBody.innerHTML = `
+        <tr>
+          <td colspan="5">상품별 매출 데이터가 없습니다.</td>
+        </tr>
+      `;
+    } else {
+      productSalesBody.innerHTML = products.map((product) => `
+        <tr>
+          <td>${product.product_name || '-'}</td>
+          <td>${product.brand || '-'}</td>
+          <td>${product.orders || 0}</td>
+          <td>${dashboardMoney(product.sales || 0)}</td>
+          <td>${dashboardMoney(product.commission || 0)}</td>
+        </tr>
+      `).join('');
+    }
+  }
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  loadInfluencerSalesSummary();
+});
