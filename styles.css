@@ -2234,34 +2234,69 @@ textarea {
     }
 }
 
+/* ===== Compact Legal Footer / Toss Payments Review ===== */
+
 .site-footer {
-    margin-top: 80px;
-    padding: 36px 20px 42px;
-    border-top: 1px solid rgba(255, 255, 255, 0.12);
-    background: #080808;
-    color: rgba(255, 255, 255, 0.72);
-    font-size: 13px;
-    line-height: 1.8;
+    margin-top: 56px;
+    padding: 18px 18px 22px;
+    border-top: 1px solid rgba(255, 255, 255, 0.14);
+    background: #050609;
+    color: rgba(255, 255, 255, 0.58);
+    font-size: 11px;
+    line-height: 1.7;
+    letter-spacing: -0.02em;
 }
 
 .footer-inner {
-    max-width: 1180px;
+    max-width: 1220px;
     margin: 0 auto;
 }
 
-.footer-company p,
-.footer-notice,
-.copyright {
-    margin: 4px 0;
+.footer-compact {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
 }
 
-.site-footer strong {
-    color: rgba(255, 255, 255, 0.9);
+.footer-business {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 0;
+}
+
+.footer-business span {
+    display: inline-flex;
+    align-items: center;
+    white-space: nowrap;
+}
+
+.footer-business span:not(:last-child)::after {
+    content: "|";
+    margin: 0 8px;
+    color: rgba(255, 255, 255, 0.26);
+}
+
+.footer-policy {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0;
+}
+
+.footer-policy a {
+    color: rgba(255, 255, 255, 0.72);
+    text-decoration: none;
     font-weight: 600;
 }
 
+.footer-policy a:not(:last-child)::after {
+    content: "|";
+    margin: 0 8px;
+    color: rgba(255, 255, 255, 0.28);
+    font-weight: 400;
+}
+
 .site-footer a {
-    color: rgba(255, 255, 255, 0.82);
+    color: rgba(255, 255, 255, 0.72);
     text-decoration: none;
 }
 
@@ -2269,27 +2304,10 @@ textarea {
     text-decoration: underline;
 }
 
-.footer-divider {
-    margin: 0 8px;
-    color: rgba(255, 255, 255, 0.32);
-}
-
-.footer-links {
-    margin-top: 18px;
-    display: flex;
-    flex-wrap: wrap;
-    gap: 8px;
-    font-weight: 600;
-}
-
-.footer-notice {
-    margin-top: 16px;
-    color: rgba(255, 255, 255, 0.52);
-}
-
 .copyright {
-    margin-top: 10px;
+    margin: 0;
     color: rgba(255, 255, 255, 0.42);
+    font-size: 10px;
 }
 
 .legal-page {
@@ -2322,19 +2340,25 @@ textarea {
 
 @media (max-width: 640px) {
     .site-footer {
-        padding: 28px 18px 34px;
-        font-size: 12px;
+        margin-top: 42px;
+        padding: 16px 16px 20px;
+        font-size: 10.5px;
     }
 
-    .footer-company p {
+    .footer-business {
         display: block;
     }
 
-    .footer-divider {
-        display: none;
+    .footer-business span {
+        display: inline;
+        white-space: normal;
     }
 
-    .footer-links {
-        gap: 6px;
+    .footer-business span:not(:last-child)::after {
+        margin: 0 6px;
+    }
+
+    .footer-policy {
+        line-height: 1.9;
     }
 }
