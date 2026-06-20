@@ -872,6 +872,108 @@ async function loadAdminOrders() {
   }).join('');
 }
 
+function getSettlementStatusText(status) {
+  const normalized = String(status || '').toLowerCase();
+
+  if (normalized === 'paid') return '지급완료';
+  if (normalized === 'ready') return '정산대기';
+  if (normalized === 'unsettled') return '미정산';
+
+  return '미정산';
+}
+
+function getSettlementStatusClass(status) {
+  const normalized = String(status || '').toLowerCase();
+
+  if (normalized === 'paid') return 'settlement-paid';
+  if (normalized === 'ready') return 'settlement-ready';
+
+  return 'settlement-unsettled';
+}
+
+async function loadAdminSettlements() {
+  const tableBody = document.getElementById('adminSettlementsTableBody');
+
+  if (!tableBody) {
+    return;
+  }
+
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="7">정산 데이터를 불러오는 중입니다.</td>
+    </tr>
+  `;
+
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    'https://api.grvn.shop';
+
+  let data;
+
+  try {
+    const res = await fetch(`${apiBase}/api/admin/settlements`);
+    data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || '관리자 정산 조회 실패');
+    }
+  } catch (err) {
+    console.error('[GRVN ADMIN] 정산 조회 실패:', err);
+
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7">정산 데이터를 불러오지 못했습니다. Console을 확인하세요.</td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  console.log('[GRVN ADMIN] 정산 데이터 로딩 성공:', data);
+
+  const summary = data.summary || {};
+
+  const influencerCountEl = document.getElementById('settlementInfluencerCount');
+  const paidOrdersEl = document.getElementById('settlementPaidOrders');
+  const totalSalesEl = document.getElementById('settlementTotalSales');
+  const totalCommissionEl = document.getElementById('settlementTotalCommission');
+
+  if (influencerCountEl) influencerCountEl.textContent = summary.total_influencers || 0;
+  if (paidOrdersEl) paidOrdersEl.textContent = summary.total_paid_orders || 0;
+  if (totalSalesEl) totalSalesEl.textContent = adminMoney(summary.total_sales || 0);
+  if (totalCommissionEl) totalCommissionEl.textContent = adminMoney(summary.total_commission || 0);
+
+  const settlements = Array.isArray(data.settlements) ? data.settlements : [];
+
+  if (!settlements.length) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="7">아직 정산 대상 데이터가 없습니다.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  tableBody.innerHTML = settlements.map((row) => {
+    const statusText = getSettlementStatusText(row.settlement_status);
+    const statusClass = getSettlementStatusClass(row.settlement_status);
+
+    return `
+      <tr>
+        <td><strong>${row.ref_code || '-'}</strong></td>
+        <td>${row.influencer_name || '-'}</td>
+        <td>${row.paid_orders || 0}</td>
+        <td>${adminMoney(row.total_sales || 0)}</td>
+        <td>${adminMoney(row.total_commission || 0)}</td>
+        <td>${adminDate(row.latest_order_at)}</td>
+        <td><span class="settlement-status ${statusClass}">${statusText}</span></td>
+      </tr>
+    `;
+  }).join('');
+}
+
 document.addEventListener('DOMContentLoaded', () => {
   const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
 
@@ -880,4 +982,12 @@ document.addEventListener('DOMContentLoaded', () => {
   }
 
   loadAdminOrders();
+
+  const refreshSettlementsBtn = document.getElementById('refreshSettlementsBtn');
+
+  if (refreshSettlementsBtn) {
+    refreshSettlementsBtn.addEventListener('click', loadAdminSettlements);
+  }
+
+  loadAdminSettlements();
 });

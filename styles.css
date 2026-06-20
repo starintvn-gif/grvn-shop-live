@@ -2482,3 +2482,40 @@ textarea {
         grid-template-columns: repeat(2, minmax(120px, 1fr));
     }
 }
+
+.admin-settlement-summary {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(140px, 1fr));
+    gap: 12px;
+    margin: 18px 0 22px;
+}
+
+.settlement-status {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.settlement-unsettled {
+    background: rgba(241, 196, 15, 0.18);
+    color: #f1c40f;
+}
+
+.settlement-ready {
+    background: rgba(52, 152, 219, 0.18);
+    color: #3498db;
+}
+
+.settlement-paid {
+    background: rgba(39, 174, 96, 0.18);
+    color: #2ecc71;
+}
+
+@media (max-width: 900px) {
+    .admin-settlement-summary {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+}
