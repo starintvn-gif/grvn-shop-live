@@ -175,12 +175,16 @@ function renderAdminPanel() {
 function showDashboard() {
   const acc = account();
   if (!acc) {
-    $('loginPanel').classList.remove('hidden');
-    $('dashboardPanel').classList.add('hidden');
+    $('loginPanel')?.classList.remove('hidden');
+    $('dashboardPanel')?.classList.add('hidden');
+    $('influencerSalesSection')?.classList.add('hidden');
     return;
   }
   $('loginPanel').classList.add('hidden');
   $('dashboardPanel').classList.remove('hidden');
+  $('influencerSalesSection')?.classList.remove('hidden');
+
+  loadInfluencerSalesSummary(acc.code);
 
   $('userName').textContent = acc.name;
   $('myCode').textContent = acc.code;
@@ -257,8 +261,9 @@ $('signupBtn')?.addEventListener('click', () => {
 /* 로그아웃 */
 $('logoutBtn')?.addEventListener('click', () => {
   API_LAYER.logout();
-  $('loginPanel').classList.remove('hidden');
-  $('dashboardPanel').classList.add('hidden');
+  $('loginPanel')?.classList.remove('hidden');
+  $('dashboardPanel')?.classList.add('hidden');
+  $('influencerSalesSection')?.classList.add('hidden');
   toast('로그아웃되었습니다.');
 });
 
@@ -379,8 +384,13 @@ function getInfluencerCodeFromPage() {
   return 'STN-_JOSOOAH01';
 }
 
-async function loadInfluencerSalesSummary() {
-  const code = getInfluencerCodeFromPage();
+async function loadInfluencerSalesSummary(codeFromLogin) {
+  const code = String(codeFromLogin || '').trim().toUpperCase();
+
+  if (!code) {
+    console.warn('[GRVN DASHBOARD] 로그인된 인플루언서 코드가 없습니다.');
+    return;
+  }
 
   const apiBase =
     window.GRVN_API_BASE ||
@@ -469,5 +479,7 @@ function renderInfluencerSalesSummary(data) {
 }
 
 document.addEventListener('DOMContentLoaded', () => {
-  loadInfluencerSalesSummary();
+  if (!account()) {
+    $('influencerSalesSection')?.classList.add('hidden');
+  }
 });

@@ -354,15 +354,24 @@ async function showApp() {
   $('loginPanel')?.classList.add('hidden');
   $('adminApp')?.classList.remove('hidden');
 
+  $('adminOrdersSection')?.classList.remove('hidden');
+  $('adminSettlementsSection')?.classList.remove('hidden');
+
   API_PRODUCTS = await fetchAdminProductsFromApi();
 
   renderList();
   updateExport();
   updatePreview();
+
+  loadAdminOrders();
+  loadAdminSettlements();
 }
 function showLogin() {
   $('loginPanel')?.classList.remove('hidden');
   $('adminApp')?.classList.add('hidden');
+
+  $('adminOrdersSection')?.classList.add('hidden');
+  $('adminSettlementsSection')?.classList.add('hidden');
 }
 function parseOptions(text) {
   return String(text || '')
@@ -696,13 +705,26 @@ function bindEvents() {
   $('adminLoginBtn')?.addEventListener('click', () => {
     const id = $('adminId').value.trim();
     const pw = $('adminPw').value.trim();
+
     if (ADMIN_USERS[id] === pw) {
       localStorage.setItem(ADMIN_SESSION_KEY, 'ok');
       showApp();
+
+      $('adminOrdersSection')?.classList.remove('hidden');
+      $('adminSettlementsSection')?.classList.remove('hidden');
+
       showToast('관리자 로그인 완료');
     } else alert('관리자 계정을 확인하세요.');
   });
-  $('logoutBtn')?.addEventListener('click', () => { localStorage.removeItem(ADMIN_SESSION_KEY); showLogin(); });
+
+  $('logoutBtn')?.addEventListener('click', () => {
+    localStorage.removeItem(ADMIN_SESSION_KEY);
+    showLogin();
+
+    $('adminOrdersSection')?.classList.add('hidden');
+    $('adminSettlementsSection')?.classList.add('hidden');
+  });
+
   $('productForm')?.addEventListener('submit', saveProduct);
   $('resetFormBtn')?.addEventListener('click', resetForm);
   $('deleteBtn')?.addEventListener('click', deleteProduct);
@@ -981,13 +1003,9 @@ document.addEventListener('DOMContentLoaded', () => {
     refreshOrdersBtn.addEventListener('click', loadAdminOrders);
   }
 
-  loadAdminOrders();
-
   const refreshSettlementsBtn = document.getElementById('refreshSettlementsBtn');
 
   if (refreshSettlementsBtn) {
     refreshSettlementsBtn.addEventListener('click', loadAdminSettlements);
   }
-
-  loadAdminSettlements();
 });
