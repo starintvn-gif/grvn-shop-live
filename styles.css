@@ -2233,3 +2233,108 @@ textarea {
         max-height: none
     }
 }
+
+.site-footer {
+    margin-top: 80px;
+    padding: 36px 20px 42px;
+    border-top: 1px solid rgba(255, 255, 255, 0.12);
+    background: #080808;
+    color: rgba(255, 255, 255, 0.72);
+    font-size: 13px;
+    line-height: 1.8;
+}
+
+.footer-inner {
+    max-width: 1180px;
+    margin: 0 auto;
+}
+
+.footer-company p,
+.footer-notice,
+.copyright {
+    margin: 4px 0;
+}
+
+.site-footer strong {
+    color: rgba(255, 255, 255, 0.9);
+    font-weight: 600;
+}
+
+.site-footer a {
+    color: rgba(255, 255, 255, 0.82);
+    text-decoration: none;
+}
+
+.site-footer a:hover {
+    text-decoration: underline;
+}
+
+.footer-divider {
+    margin: 0 8px;
+    color: rgba(255, 255, 255, 0.32);
+}
+
+.footer-links {
+    margin-top: 18px;
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    font-weight: 600;
+}
+
+.footer-notice {
+    margin-top: 16px;
+    color: rgba(255, 255, 255, 0.52);
+}
+
+.copyright {
+    margin-top: 10px;
+    color: rgba(255, 255, 255, 0.42);
+}
+
+.legal-page {
+    max-width: 860px;
+    margin: 0 auto;
+    padding: 80px 20px;
+    color: #fff;
+}
+
+.legal-page h1 {
+    font-size: 34px;
+    margin-bottom: 32px;
+}
+
+.legal-page h2 {
+    margin-top: 32px;
+    font-size: 20px;
+}
+
+.legal-page p,
+.legal-page li {
+    color: rgba(255, 255, 255, 0.74);
+    line-height: 1.8;
+}
+
+.legal-page a {
+    color: #fff;
+    font-weight: 700;
+}
+
+@media (max-width: 640px) {
+    .site-footer {
+        padding: 28px 18px 34px;
+        font-size: 12px;
+    }
+
+    .footer-company p {
+        display: block;
+    }
+
+    .footer-divider {
+        display: none;
+    }
+
+    .footer-links {
+        gap: 6px;
+    }
+}
