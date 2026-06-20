@@ -185,6 +185,61 @@
         </aside>
       </div>
     </section>
+    <section class="admin-card" id="adminOrdersSection">
+      <div class="admin-section-head">
+        <div>
+          <p class="eyebrow">ORDERS / PAYMENTS</p>
+          <h2>주문 · 결제내역</h2>
+          <p class="muted">PortOne 테스트 결제 및 GRVN 주문 DB에 저장된 최근 주문 내역입니다.</p>
+        </div>
+        <button class="btn secondary" type="button" id="refreshOrdersBtn">주문 새로고침</button>
+      </div>
+
+      <div class="admin-order-summary">
+        <div class="summary-box">
+          <span>전체 주문</span>
+          <strong id="adminTotalOrders">0</strong>
+        </div>
+        <div class="summary-box">
+          <span>결제완료</span>
+          <strong id="adminPaidOrders">0</strong>
+        </div>
+        <div class="summary-box">
+          <span>결제대기</span>
+          <strong id="adminPendingOrders">0</strong>
+        </div>
+        <div class="summary-box">
+          <span>총 결제금액</span>
+          <strong id="adminTotalPayment">₩0</strong>
+        </div>
+        <div class="summary-box">
+          <span>예상 수수료</span>
+          <strong id="adminTotalCommission">₩0</strong>
+        </div>
+      </div>
+
+      <div class="admin-table-wrap">
+        <table class="admin-table">
+          <thead>
+            <tr>
+              <th>주문번호</th>
+              <th>상태</th>
+              <th>상품명</th>
+              <th>결제금액</th>
+              <th>수수료</th>
+              <th>인플루언서 코드</th>
+              <th>결제상태</th>
+              <th>주문일시</th>
+            </tr>
+          </thead>
+          <tbody id="adminOrdersTableBody">
+            <tr>
+              <td colspan="8">주문 내역을 불러오는 중입니다.</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </section>
   </main>
 
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
@@ -192,7 +247,7 @@
     window.GRVN_API_BASE = "https://api.grvn.shop";
   </script>
   <script src="/data.js?v=20260531-admin-mvp"></script>
-  <script src="/admin.js?v=20260614-media-fields-v1"></script>
+  <script src="/admin.js?v=20260616-admin-orders-v1"></script>
 </body>
 
 </html>

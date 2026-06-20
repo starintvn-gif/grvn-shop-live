@@ -2362,3 +2362,81 @@ textarea {
         line-height: 1.9;
     }
 }
+
+.admin-order-summary {
+    display: grid;
+    grid-template-columns: repeat(5, minmax(120px, 1fr));
+    gap: 12px;
+    margin: 18px 0 22px;
+}
+
+.summary-box {
+    padding: 16px;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.06);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.summary-box span {
+    display: block;
+    font-size: 12px;
+    opacity: 0.7;
+    margin-bottom: 8px;
+}
+
+.summary-box strong {
+    font-size: 20px;
+}
+
+.admin-table-wrap {
+    overflow-x: auto;
+}
+
+.admin-table {
+    width: 100%;
+    border-collapse: collapse;
+    min-width: 960px;
+}
+
+.admin-table th,
+.admin-table td {
+    padding: 12px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+    text-align: left;
+    font-size: 13px;
+}
+
+.admin-table th {
+    opacity: 0.65;
+    font-weight: 700;
+}
+
+.status-pill {
+    display: inline-flex;
+    align-items: center;
+    border-radius: 999px;
+    padding: 5px 9px;
+    font-size: 12px;
+    font-weight: 800;
+}
+
+.status-paid {
+    background: rgba(39, 174, 96, 0.18);
+    color: #2ecc71;
+}
+
+.status-pending {
+    background: rgba(241, 196, 15, 0.18);
+    color: #f1c40f;
+}
+
+.status-failed {
+    background: rgba(231, 76, 60, 0.18);
+    color: #e74c3c;
+}
+
+@media (max-width: 900px) {
+    .admin-order-summary {
+        grid-template-columns: repeat(2, minmax(120px, 1fr));
+    }
+}

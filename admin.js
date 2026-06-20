@@ -753,3 +753,131 @@ function bindEvents() {
 
 bindEvents();
 if (isLoggedIn()) showApp(); else showLogin();
+
+function adminMoney(value) {
+  return `₩${Number(value || 0).toLocaleString()}`;
+}
+
+function adminDate(value) {
+  if (!value) return '-';
+
+  try {
+    return new Date(value).toLocaleString('ko-KR');
+  } catch {
+    return value;
+  }
+}
+
+function getOrderStatusClass(status) {
+  const normalized = String(status || '').toLowerCase();
+
+  if (normalized === 'paid') return 'status-paid';
+  if (normalized === 'pending') return 'status-pending';
+  return 'status-failed';
+}
+
+function getOrderStatusText(status) {
+  const normalized = String(status || '').toLowerCase();
+
+  if (normalized === 'paid') return '결제완료';
+  if (normalized === 'pending') return '결제대기';
+  if (normalized === 'cancelled') return '취소';
+  if (normalized === 'failed') return '실패';
+
+  return status || '-';
+}
+
+async function loadAdminOrders() {
+  const tableBody = document.getElementById('adminOrdersTableBody');
+
+  if (!tableBody) {
+    return;
+  }
+
+  tableBody.innerHTML = `
+    <tr>
+      <td colspan="8">주문 내역을 불러오는 중입니다.</td>
+    </tr>
+  `;
+
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    'https://api.grvn.shop';
+
+  let data;
+
+  try {
+    const res = await fetch(`${apiBase}/api/admin/orders?limit=50`);
+
+    data = await res.json();
+
+    if (!res.ok || !data.success) {
+      throw new Error(data.error || '관리자 주문 조회 실패');
+    }
+  } catch (err) {
+    console.error('[GRVN ADMIN] 주문 조회 실패:', err);
+
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="8">주문 내역을 불러오지 못했습니다. Console을 확인하세요.</td>
+      </tr>
+    `;
+
+    return;
+  }
+
+  const summary = data.summary || {};
+
+  const totalOrdersEl = document.getElementById('adminTotalOrders');
+  const paidOrdersEl = document.getElementById('adminPaidOrders');
+  const pendingOrdersEl = document.getElementById('adminPendingOrders');
+  const totalPaymentEl = document.getElementById('adminTotalPayment');
+  const totalCommissionEl = document.getElementById('adminTotalCommission');
+
+  if (totalOrdersEl) totalOrdersEl.textContent = summary.total_orders || 0;
+  if (paidOrdersEl) paidOrdersEl.textContent = summary.paid_orders || 0;
+  if (pendingOrdersEl) pendingOrdersEl.textContent = summary.pending_orders || 0;
+  if (totalPaymentEl) totalPaymentEl.textContent = adminMoney(summary.total_payment_amount || 0);
+  if (totalCommissionEl) totalCommissionEl.textContent = adminMoney(summary.total_commission_amount || 0);
+
+  const orders = Array.isArray(data.orders) ? data.orders : [];
+
+  if (!orders.length) {
+    tableBody.innerHTML = `
+      <tr>
+        <td colspan="8">아직 주문 내역이 없습니다.</td>
+      </tr>
+    `;
+    return;
+  }
+
+  tableBody.innerHTML = orders.map((order) => {
+    const statusClass = getOrderStatusClass(order.status);
+    const statusText = getOrderStatusText(order.status);
+
+    return `
+      <tr>
+        <td><strong>${order.order_no || '-'}</strong></td>
+        <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+        <td>${order.product_name || '-'}</td>
+        <td>${adminMoney(order.payment_total || 0)}</td>
+        <td>${adminMoney(order.commission_amount || 0)}</td>
+        <td>${order.ref_code || '-'}</td>
+        <td>${order.payment_status || '-'}</td>
+        <td>${adminDate(order.created_at)}</td>
+      </tr>
+    `;
+  }).join('');
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+  const refreshOrdersBtn = document.getElementById('refreshOrdersBtn');
+
+  if (refreshOrdersBtn) {
+    refreshOrdersBtn.addEventListener('click', loadAdminOrders);
+  }
+
+  loadAdminOrders();
+});

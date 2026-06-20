@@ -5,7 +5,7 @@
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <title>상품 랜딩 / GRVN</title>
-  <meta name="description" content="숏폼 영상과 웹 상세페이지를 함께 확인하고 옵션 선택, 결제 테스트까지 진행하는 상품 랜딩페이지" />
+  <meta name="description" content="숏폼 영상과 상품 상세정보를 함께 확인하고 옵션 선택부터 구매까지 진행할 수 있는 GRVN 상품 랜딩페이지" />
   <link rel="stylesheet" href="/styles.css?v=20260620-footer-compact-v1" />
 </head>
 
@@ -53,8 +53,10 @@
           </section>
 
           <section id="detail" class="detail-section" aria-labelledby="detail-title">
-            <h2 id="detail-title">웹 상세페이지 미리보기</h2>
-            <p class="muted">실제 오픈 시 브랜드 상세 이미지, 모델 착장 컷, 소재 설명, 사용법/스타일링 콘텐츠를 이 영역에 업로드합니다. 현재는 프론트 MVP용 상세페이지 블록입니다.
+            <h2 id="detail-title">상품 상세정보</h2>
+            <p class="muted">
+              상품의 착용 이미지, 소재 정보, 스타일링 포인트, 사이즈 및 관리 방법을 확인할 수 있습니다.
+              실제 상품 정보는 브랜드 및 상품별 상세 기준에 따라 제공됩니다.
             </p>
             <div class="look-grid" aria-label="상세 이미지 예시">
               <div class="look-tile">LOOK 01<br><span id="detailCat1">CATEGORY</span></div>
@@ -100,7 +102,7 @@
           </section>
 
           <section id="delivery" class="detail-section" aria-labelledby="delivery-title">
-            <h2 id="delivery-title">배송/교환/정산 안내</h2>
+            <h2 id="delivery-title">배송/교환 안내</h2>
             <div class="policy-grid">
               <article>
                 <h3>배송</h3>
@@ -111,18 +113,18 @@
                 <p class="muted">수령 후 7일 이내, 상품 훼손 시 제한</p>
               </article>
               <article>
-                <h3>정산</h3>
-                <p class="muted">Affiliate 코드별 월 단위 집계</p>
+                <h3>고객센터</h3>
+                <p class="muted">상품 및 주문 문의는 고객센터를 통해 안내드립니다.</p>
               </article>
             </div>
           </section>
 
-          <section class="payment-sticky" aria-label="결제 테스트 영역">
+          <section class="payment-sticky" aria-label="주문 결제 영역">
             <div class="summary" aria-label="주문 요약">
               <div class="summary-row"><span>상품금액</span><b id="subtotal">₩0</b></div>
               <div class="summary-row"><span>배송비</span><b>무료</b></div>
               <div class="summary-row"><span>인플루언서 예상 수수료</span><b id="commission">₩0</b></div>
-              <div class="summary-row total"><span>테스트 결제금액</span><b id="total">₩0</b></div>
+              <div class="summary-row total"><span>총 결제금액</span><b id="total">₩0</b></div>
             </div>
             <button id="checkoutBtn" class="btn primary" type="button">구매하기</button>
             <div id="complete" class="complete" role="status" aria-live="polite">
@@ -130,7 +132,9 @@
               <p class="muted" id="completeText"></p>
               <button class="btn" type="button" onclick="window.close()">창 닫기</button>
             </div>
-            <p class="notice"><strong>실제 오픈 시:</strong> 이 영역에 PG 결제창, 주문 DB, 결제 웹훅, 정산 DB를 연결합니다.</p>
+            <p class="notice">
+              결제 완료 후 주문 정보와 배송 안내가 고객센터 및 주문 처리 기준에 따라 안내됩니다.
+            </p>
           </section>
         </div>
       </div>
@@ -164,10 +168,14 @@
   <div id="toast" class="toast" role="status" aria-live="polite"></div>
   <script>
     window.GRVN_API_BASE = "https://api.grvn.shop";
+
+    // Toss Payments clientKey는 프론트에서 사용 가능.
+    // 지금은 테스트 clientKey를 넣고, 심사 완료 후 live clientKey로 교체.
+    window.TOSS_CLIENT_KEY = "test_ck_mBZ1gQ4YVX5GYD49npajrl2KPoqN";
   </script>
   <script src="/data.js?v=20260615"></script>
-  <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
-  <script src="/product.js?v=20260616-portone-v1"></script>
+  <script src="https://js.tosspayments.com/v2/standard"></script>
+  <script src="/product.js?v=20260620-toss-v1"></script>
 </body>
 
 </html>
