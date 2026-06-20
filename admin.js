@@ -365,6 +365,9 @@ async function showApp() {
 
   loadAdminOrders();
   loadAdminSettlements();
+
+  $('adminOrdersSection')?.classList.remove('hidden');
+  $('adminSettlementsSection')?.classList.remove('hidden');
 }
 function showLogin() {
   $('loginPanel')?.classList.remove('hidden');
@@ -702,19 +705,22 @@ async function copyExport() {
 }
 
 function bindEvents() {
-  $('adminLoginBtn')?.addEventListener('click', () => {
+  $('adminLoginBtn')?.addEventListener('click', async () => {
     const id = $('adminId').value.trim();
     const pw = $('adminPw').value.trim();
 
     if (ADMIN_USERS[id] === pw) {
       localStorage.setItem(ADMIN_SESSION_KEY, 'ok');
-      showApp();
+
+      await showApp();
 
       $('adminOrdersSection')?.classList.remove('hidden');
       $('adminSettlementsSection')?.classList.remove('hidden');
 
       showToast('관리자 로그인 완료');
-    } else alert('관리자 계정을 확인하세요.');
+    } else {
+      alert('관리자 계정을 확인하세요.');
+    }
   });
 
   $('logoutBtn')?.addEventListener('click', () => {
