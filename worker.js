@@ -2183,6 +2183,258 @@ async function saveTossPaymentToSupabase(request, env, args) {
     };
 }
 
+async function listAdminOrders(request, env) {
+    if (!env.SUPABASE_URL) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_URL"
+        }, 500);
+    }
+
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_SERVICE_ROLE_KEY"
+        }, 500);
+    }
+
+    const url = new URL(request.url);
+    const limitValue = Number(url.searchParams.get("limit") || 50);
+    const limit = Number.isFinite(limitValue)
+        ? Math.min(Math.max(limitValue, 1), 200)
+        : 50;
+
+    const orderParams = new URLSearchParams();
+    orderParams.set("select", "*");
+    orderParams.set("order", "created_at.desc");
+    orderParams.set("limit", String(limit));
+
+    const orderEndpoint = getSupabaseEndpoint(
+        env,
+        `/rest/v1/orders?${orderParams.toString()}`
+    );
+
+    const orderRes = await fetch(orderEndpoint, {
+        method: "GET",
+        headers: supabaseHeaders(env)
+    });
+
+    const orderText = await orderRes.text();
+
+    if (!orderRes.ok) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Admin orders fetch failed",
+            status: orderRes.status,
+            detail: orderText
+        }, 500);
+    }
+
+    let orders = [];
+
+    try {
+        orders = orderText ? JSON.parse(orderText) : [];
+    } catch (err) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Admin orders response is not valid JSON",
+            raw: orderText,
+            detail: String(err)
+        }, 500);
+    }
+
+    const orderIds = orders.map((order) => order.id).filter(Boolean);
+
+    let items = [];
+    let payments = [];
+
+    if (orderIds.length) {
+        const idList = orderIds.join(",");
+
+        const itemParams = new URLSearchParams();
+        itemParams.set("select", "*");
+        itemParams.set("order_id", `in.(${idList})`);
+
+        const itemEndpoint = getSupabaseEndpoint(
+            env,
+            `/rest/v1/order_items?${itemParams.toString()}`
+        );
+
+        const itemRes = await fetch(itemEndpoint, {
+            method: "GET",
+            headers: supabaseHeaders(env)
+        });
+
+        const itemText = await itemRes.text();
+
+        if (itemRes.ok) {
+            try {
+                items = itemText ? JSON.parse(itemText) : [];
+            } catch {
+                items = [];
+            }
+        }
+
+        const paymentParams = new URLSearchParams();
+        paymentParams.set("select", "*");
+        paymentParams.set("order_id", `in.(${idList})`);
+
+        const paymentEndpoint = getSupabaseEndpoint(
+            env,
+            `/rest/v1/payments?${paymentParams.toString()}`
+        );
+
+        const paymentRes = await fetch(paymentEndpoint, {
+            method: "GET",
+            headers: supabaseHeaders(env)
+        });
+
+        const paymentText = await paymentRes.text();
+
+        if (paymentRes.ok) {
+            try {
+                payments = paymentText ? JSON.parse(paymentText) : [];
+            } catch {
+                payments = [];
+            }
+        }
+    }
+
+    const enrichedOrders = orders.map((order) => {
+        const orderItems = items.filter((item) => item.order_id === order.id);
+        const orderPayments = payments.filter((payment) => payment.order_id === order.id);
+
+        const firstItem = orderItems[0] || {};
+        const firstPayment = orderPayments[0] || {};
+
+        return {
+            ...order,
+
+            items: orderItems,
+            payments: orderPayments,
+
+            product_name: firstItem.product_name || "",
+            product_slug: firstItem.product_slug || "",
+            brand: firstItem.brand || "",
+            qty: firstItem.qty || 0,
+
+            payment_provider: firstPayment.payment_provider || "",
+            payment_id: firstPayment.payment_id || "",
+            payment_status: firstPayment.payment_status || "",
+
+            order_no: order.order_no,
+            status: order.status,
+            payment_total: Number(order.payment_total || 0),
+            commission_amount: Number(order.commission_amount || 0),
+            ref_code: order.ref_code || "",
+            created_at: order.created_at
+        };
+    });
+
+    return jsonResponse(request, env, {
+        success: true,
+        count: enrichedOrders.length,
+        orders: enrichedOrders
+    });
+}
+
+async function listAdminSettlements(request, env) {
+    if (!env.SUPABASE_URL) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_URL"
+        }, 500);
+    }
+
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_SERVICE_ROLE_KEY"
+        }, 500);
+    }
+
+    const params = new URLSearchParams();
+    params.set("select", "*");
+    params.set("status", "eq.paid");
+    params.set("order", "created_at.desc");
+    params.set("limit", "500");
+
+    const endpoint = getSupabaseEndpoint(
+        env,
+        `/rest/v1/orders?${params.toString()}`
+    );
+
+    const res = await fetch(endpoint, {
+        method: "GET",
+        headers: supabaseHeaders(env)
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Admin settlements fetch failed",
+            status: res.status,
+            detail: text
+        }, 500);
+    }
+
+    let orders = [];
+
+    try {
+        orders = text ? JSON.parse(text) : [];
+    } catch (err) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Admin settlements response is not valid JSON",
+            raw: text,
+            detail: String(err)
+        }, 500);
+    }
+
+    const map = new Map();
+
+    for (const order of orders) {
+        const refCode = order.ref_code || "GRVN";
+        const key = String(refCode).toUpperCase();
+
+        if (!map.has(key)) {
+            map.set(key, {
+                ref_code: key,
+                influencer_name: order.influencer_name || "",
+                paid_order_count: 0,
+                total_sales: 0,
+                total_commission: 0,
+                latest_order_at: null,
+                settlement_status: "pending"
+            });
+        }
+
+        const row = map.get(key);
+
+        row.paid_order_count += 1;
+        row.total_sales += Number(order.payment_total || 0);
+        row.total_commission += Number(order.commission_amount || 0);
+
+        if (!row.influencer_name && order.influencer_name) {
+            row.influencer_name = order.influencer_name;
+        }
+
+        if (!row.latest_order_at || new Date(order.created_at) > new Date(row.latest_order_at)) {
+            row.latest_order_at = order.created_at;
+        }
+    }
+
+    const settlements = Array.from(map.values());
+
+    return jsonResponse(request, env, {
+        success: true,
+        count: settlements.length,
+        settlements
+    });
+}
+
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
@@ -2234,6 +2486,8 @@ export default {
                     "POST /api/admin/products/inactive",
                     "GET /api/admin/product-options",
                     "POST /api/admin/product-options",
+                    "GET /api/admin/orders",
+                    "GET /api/admin/settlements",
                     "POST /api/orders",
                     "GET /api/orders/:order_no",
                     "POST /api/payments/confirm",
@@ -2260,6 +2514,14 @@ export default {
 
         if (url.pathname === "/api/admin/products" && request.method === "POST") {
             return saveAdminProduct(request, env);
+        }
+
+        if (url.pathname === "/api/admin/orders" && request.method === "GET") {
+            return listAdminOrders(request, env);
+        }
+
+        if (url.pathname === "/api/admin/settlements" && request.method === "GET") {
+            return listAdminSettlements(request, env);
         }
 
         if (url.pathname === "/api/admin/products/inactive" && request.method === "POST") {
