@@ -54,6 +54,15 @@
                 return;
             }
 
+            const confirmKey = `grvn_confirmed_${paymentKey}`;
+
+            if (sessionStorage.getItem(confirmKey) === 'ok') {
+                document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
+                document.getElementById('resultMessage').textContent =
+                    '이미 승인 확인이 완료된 결제입니다. 주문이 정상적으로 접수되었습니다.';
+                return;
+            }
+
             let lastOrder = null;
 
             try {
@@ -89,6 +98,8 @@
                         message.includes('이미 처리') ||
                         message.includes('ALREADY_PROCESSED')
                     ) {
+                        sessionStorage.setItem(confirmKey, 'ok');
+
                         document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
                         document.getElementById('resultMessage').textContent =
                             '이미 승인 처리된 결제입니다. 주문이 정상적으로 접수되었습니다.';
@@ -102,6 +113,8 @@
                 }
 
                 console.log('[GRVN] 결제 승인 성공:', data);
+
+                sessionStorage.setItem(confirmKey, 'ok');
 
                 document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
                 document.getElementById('resultMessage').textContent =
