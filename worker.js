@@ -1805,6 +1805,93 @@ async function verifyPortOnePayment(request, env) {
 
 /* Admin 상품 API 함수 추가 끝 */
 
+async function handleTossPaymentConfirm(request, env) {
+    try {
+        const body = await readJson(request);
+
+        const paymentKey = body.paymentKey;
+        const orderId = body.orderId;
+        const amount = Number(body.amount);
+        const lastOrder = body.lastOrder || null;
+
+        if (!paymentKey || !orderId || !amount) {
+            return jsonResponse(request, env, {
+                success: false,
+                message: "paymentKey, orderId, amount 값이 필요합니다."
+            }, 400);
+        }
+
+        if (!env.TOSS_SECRET_KEY) {
+            return jsonResponse(request, env, {
+                success: false,
+                message: "TOSS_SECRET_KEY가 Cloudflare Worker Secret에 설정되지 않았습니다."
+            }, 500);
+        }
+
+        if (lastOrder && Number(lastOrder.amount) !== amount) {
+            return jsonResponse(request, env, {
+                success: false,
+                message: "주문금액과 결제금액이 일치하지 않습니다.",
+                expected: Number(lastOrder.amount),
+                received: amount
+            }, 400);
+        }
+
+        const encodedSecretKey = btoa(env.TOSS_SECRET_KEY + ":");
+
+        const tossRes = await fetch("https://api.tosspayments.com/v1/payments/confirm", {
+            method: "POST",
+            headers: {
+                "Authorization": "Basic " + encodedSecretKey,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                paymentKey,
+                orderId,
+                amount
+            })
+        });
+
+        const tossData = await tossRes.json();
+
+        if (!tossRes.ok) {
+            console.error("[GRVN] Toss confirm failed:", tossData);
+
+            return jsonResponse(request, env, {
+                success: false,
+                message: tossData.message || "토스 결제 승인에 실패했습니다.",
+                code: tossData.code,
+                toss: tossData
+            }, tossRes.status);
+        }
+
+        /*
+          현재 단계:
+          - Toss 결제 승인 성공 확인
+          - 다음 단계에서 Supabase orders/payments 저장 또는 업데이트 연결
+        */
+
+        return jsonResponse(request, env, {
+            success: true,
+            message: "결제가 승인되었습니다.",
+            payment: tossData,
+            order: {
+                orderId,
+                amount,
+                lastOrder
+            }
+        });
+
+    } catch (error) {
+        console.error("[GRVN] handleTossPaymentConfirm error:", error);
+
+        return jsonResponse(request, env, {
+            success: false,
+            message: error.message || "결제 승인 처리 중 서버 오류가 발생했습니다."
+        }, 500);
+    }
+}
+
 export default {
     async fetch(request, env, ctx) {
         const url = new URL(request.url);
@@ -1820,9 +1907,13 @@ export default {
             return jsonResponse(request, env, {
                 status: "ok",
                 service: "grvn-api",
-                version: "portone-payments-v1",
+                version: "toss-payments-v1",
                 message: "GRVN backend API is running"
             });
+        }
+
+        if (url.pathname === "/api/payments/confirm" && request.method === "POST") {
+            return handleTossPaymentConfirm(request, env);
         }
 
         if (url.pathname === "/debug/env") {
@@ -1840,7 +1931,7 @@ export default {
         if (url.pathname === "/") {
             return jsonResponse(request, env, {
                 service: "grvn-api",
-                version: "portone-payments-v1",
+                version: "toss-payments-v1",
                 available: [
                     "/health",
                     "/debug/env",
@@ -1854,6 +1945,7 @@ export default {
                     "POST /api/admin/product-options",
                     "POST /api/orders",
                     "GET /api/orders/:order_no",
+                    "POST /api/payments/confirm",
                     "POST /api/payments/verify"
                 ]
             });
