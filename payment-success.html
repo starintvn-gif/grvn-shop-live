@@ -80,11 +80,24 @@
                 const data = await res.json();
 
                 if (!res.ok || !data.success) {
-                    console.error('[GRVN] 결제 승인 실패:', data);
+                    console.error('[GRVN] 결제 승인 응답:', data);
+
+                    const message = data.message || data.error || '';
+
+                    if (
+                        message.includes('이미 처리된 결제') ||
+                        message.includes('이미 처리') ||
+                        message.includes('ALREADY_PROCESSED')
+                    ) {
+                        document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
+                        document.getElementById('resultMessage').textContent =
+                            '이미 승인 처리된 결제입니다. 주문이 정상적으로 접수되었습니다.';
+                        return;
+                    }
 
                     document.getElementById('resultTitle').textContent = '결제 승인에 실패했습니다';
                     document.getElementById('resultMessage').textContent =
-                        data.message || data.error || '결제 승인 중 문제가 발생했습니다. 고객센터로 문의해주세요.';
+                        message || '결제 승인 중 문제가 발생했습니다. 고객센터로 문의해주세요.';
                     return;
                 }
 
