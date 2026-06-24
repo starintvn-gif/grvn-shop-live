@@ -2519,3 +2519,142 @@ textarea {
         grid-template-columns: repeat(2, minmax(120px, 1fr));
     }
 }
+
+/* ================================
+   GRAND OPEN POPUP / 2026-06-24
+================================ */
+
+.grand-open-popup {
+    position: fixed;
+    inset: 0;
+    z-index: 9999;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    padding: 24px;
+}
+
+.grand-open-popup.is-active {
+    display: flex;
+}
+
+.grand-open-backdrop {
+    position: absolute;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.64);
+    backdrop-filter: blur(5px);
+}
+
+.grand-open-box {
+    position: relative;
+    width: min(430px, 100%);
+    padding: 38px 28px 28px;
+    border-radius: 28px;
+    background: #ffffff;
+    color: #111111;
+    text-align: center;
+    box-shadow: 0 28px 90px rgba(0, 0, 0, 0.42);
+    overflow: hidden;
+}
+
+.grand-open-box::before {
+    content: "";
+    position: absolute;
+    top: 0;
+    left: 18%;
+    right: 18%;
+    height: 5px;
+    border-radius: 999px;
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+}
+
+.grand-open-close {
+    position: absolute;
+    top: 14px;
+    right: 16px;
+    width: 34px;
+    height: 34px;
+    border: 0;
+    border-radius: 50%;
+    background: #f1f1f1;
+    color: #111111;
+    font-size: 24px;
+    line-height: 1;
+    cursor: pointer;
+}
+
+.grand-open-label {
+    margin: 4px 0 14px;
+    font-size: 12px;
+    letter-spacing: 0.18em;
+    font-weight: 900;
+    color: #777777;
+}
+
+.grand-open-box h2 {
+    margin: 0;
+    font-size: clamp(30px, 7vw, 44px);
+    line-height: 1.05;
+    font-weight: 950;
+    letter-spacing: -0.045em;
+    color: #111111;
+}
+
+.grand-open-copy {
+    margin: 18px 0 24px;
+    font-size: 15px;
+    line-height: 1.65;
+    color: #444444;
+    word-break: keep-all;
+}
+
+.grand-open-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    min-width: 170px;
+    height: 46px;
+    padding: 0 22px;
+    border-radius: 999px;
+    background: #111111;
+    color: #ffffff;
+    font-size: 14px;
+    font-weight: 900;
+    text-decoration: none;
+}
+
+.grand-open-btn:hover {
+    background: linear-gradient(135deg, var(--pink), var(--purple));
+    color: #ffffff;
+}
+
+.grand-open-today {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    margin-top: 18px;
+    font-size: 13px;
+    color: #777777;
+    cursor: pointer;
+}
+
+.grand-open-today input {
+    width: 14px;
+    height: 14px;
+}
+
+@media (max-width: 480px) {
+    .grand-open-popup {
+        padding: 18px;
+    }
+
+    .grand-open-box {
+        padding: 36px 22px 26px;
+        border-radius: 24px;
+    }
+
+    .grand-open-copy {
+        font-size: 14px;
+    }
+}

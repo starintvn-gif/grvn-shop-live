@@ -8,7 +8,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>GRVN 숏폼 커머스</title>
   <meta name="description" content="숏폼 영상 중심으로 제품 발견부터 구매 랜딩까지 연결되는 스타인티비 숏폼 커머스 플랫폼">
-  <link rel="stylesheet" href="/styles.css?v=20260620-footer-compact-v1" />
+  <link rel="stylesheet" href="/styles.css?v=20260624-grandopen-popup-v1" />
 </head>
 
 <body>
@@ -105,7 +105,39 @@
     window.GRVN_API_BASE = "https://api.grvn.shop";
   </script>
   <script src="/data.js?v=20260529-video-fix"></script>
-  <script src="/shop.js?v=20260614-media-fields-v1"></script>
+  <script src="/shop.js?v=20260624-grandopen-popup-v1"></script>
+
+  <!-- GRAND OPEN POPUP -->
+  <div id="grandOpenPopup" class="grand-open-popup">
+    <div class="grand-open-backdrop"></div>
+
+    <div class="grand-open-box">
+      <button id="grandOpenClose" class="grand-open-close" type="button" aria-label="팝업 닫기">
+        ×
+      </button>
+
+      <p class="grand-open-label">GRVN OFFICIAL LAUNCH</p>
+
+      <h2>
+        2026. 07. 20 MON<br>
+        GRAND OPEN
+      </h2>
+
+      <p class="grand-open-copy">
+        숏폼커머스와 어필리에이트 협업이 만나는<br>
+        새로운 콘텐츠 커머스 플랫폼이 시작됩니다.
+      </p>
+
+      <a class="grand-open-btn" href="#shop">
+        먼저 둘러보기
+      </a>
+
+      <label class="grand-open-today">
+        <input id="grandOpenTodayClose" type="checkbox">
+        오늘 하루 보지 않기
+      </label>
+    </div>
+  </div>
 </body>
 
 </html>

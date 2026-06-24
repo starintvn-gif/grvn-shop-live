@@ -342,3 +342,45 @@ async function initShop() {
 }
 
 initShop();
+
+/* ================================
+   GRAND OPEN POPUP / 2026-06-24
+================================ */
+
+document.addEventListener('DOMContentLoaded', () => {
+  const popup = document.getElementById('grandOpenPopup');
+  const closeBtn = document.getElementById('grandOpenClose');
+  const todayClose = document.getElementById('grandOpenTodayClose');
+
+  if (!popup || !closeBtn) return;
+
+  const todayKey = 'grvn_grand_open_popup_closed_date';
+  const today = new Date().toISOString().slice(0, 10);
+  const savedDate = localStorage.getItem(todayKey);
+
+  if (savedDate !== today) {
+    popup.classList.add('is-active');
+  }
+
+  const closePopup = () => {
+    if (todayClose && todayClose.checked) {
+      localStorage.setItem(todayKey, today);
+    }
+
+    popup.classList.remove('is-active');
+  };
+
+  closeBtn.addEventListener('click', closePopup);
+
+  popup.addEventListener('click', (event) => {
+    if (event.target.classList.contains('grand-open-backdrop')) {
+      closePopup();
+    }
+  });
+
+  document.addEventListener('keydown', (event) => {
+    if (event.key === 'Escape') {
+      closePopup();
+    }
+  });
+});
