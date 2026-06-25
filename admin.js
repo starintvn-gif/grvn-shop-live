@@ -856,7 +856,32 @@ async function loadAdminOrders() {
     return;
   }
 
-  const summary = data.summary || {};
+  const orders = Array.isArray(data.orders) ? data.orders : [];
+
+  const paidOrders = orders.filter((order) => {
+    const status = String(order.status || '').toLowerCase();
+    return status === 'paid';
+  });
+
+  const pendingOrders = orders.filter((order) => {
+    const status = String(order.status || '').toLowerCase();
+    return status === 'pending';
+  });
+
+  const cancelledOrders = orders.filter((order) => {
+    const status = String(order.status || '').toLowerCase();
+    return status === 'cancelled' || status === 'canceled';
+  });
+
+  const totalPaymentAmount = paidOrders.reduce(
+    (sum, order) => sum + Number(order.payment_total || 0),
+    0
+  );
+
+  const totalCommissionAmount = paidOrders.reduce(
+    (sum, order) => sum + Number(order.commission_amount || 0),
+    0
+  );
 
   const totalOrdersEl = document.getElementById('adminTotalOrders');
   const paidOrdersEl = document.getElementById('adminPaidOrders');
@@ -864,13 +889,11 @@ async function loadAdminOrders() {
   const totalPaymentEl = document.getElementById('adminTotalPayment');
   const totalCommissionEl = document.getElementById('adminTotalCommission');
 
-  if (totalOrdersEl) totalOrdersEl.textContent = summary.total_orders || 0;
-  if (paidOrdersEl) paidOrdersEl.textContent = summary.paid_orders || 0;
-  if (pendingOrdersEl) pendingOrdersEl.textContent = summary.pending_orders || 0;
-  if (totalPaymentEl) totalPaymentEl.textContent = adminMoney(summary.total_payment_amount || 0);
-  if (totalCommissionEl) totalCommissionEl.textContent = adminMoney(summary.total_commission_amount || 0);
-
-  const orders = Array.isArray(data.orders) ? data.orders : [];
+  if (totalOrdersEl) totalOrdersEl.textContent = orders.length;
+  if (paidOrdersEl) paidOrdersEl.textContent = paidOrders.length;
+  if (pendingOrdersEl) pendingOrdersEl.textContent = pendingOrders.length;
+  if (totalPaymentEl) totalPaymentEl.textContent = adminMoney(totalPaymentAmount);
+  if (totalCommissionEl) totalCommissionEl.textContent = adminMoney(totalCommissionAmount);
 
   if (!orders.length) {
     tableBody.innerHTML = `
@@ -905,6 +928,7 @@ function getSettlementStatusText(status) {
 
   if (normalized === 'paid') return '지급완료';
   if (normalized === 'ready') return '정산대기';
+  if (normalized === 'pending') return '미정산';
   if (normalized === 'unsettled') return '미정산';
 
   return '미정산';
@@ -915,6 +939,8 @@ function getSettlementStatusClass(status) {
 
   if (normalized === 'paid') return 'settlement-paid';
   if (normalized === 'ready') return 'settlement-ready';
+  if (normalized === 'pending') return 'settlement-unsettled';
+  if (normalized === 'unsettled') return 'settlement-unsettled';
 
   return 'settlement-unsettled';
 }
@@ -961,19 +987,31 @@ async function loadAdminSettlements() {
 
   console.log('[GRVN ADMIN] 정산 데이터 로딩 성공:', data);
 
-  const summary = data.summary || {};
+  const settlements = Array.isArray(data.settlements) ? data.settlements : [];
+
+  const totalInfluencers = settlements.length;
+
+  const totalPaidOrders = settlements.reduce((sum, row) => {
+    return sum + Number(row.paid_orders || row.paid_order_count || 0);
+  }, 0);
+
+  const totalSales = settlements.reduce((sum, row) => {
+    return sum + Number(row.total_sales || 0);
+  }, 0);
+
+  const totalCommission = settlements.reduce((sum, row) => {
+    return sum + Number(row.total_commission || 0);
+  }, 0);
 
   const influencerCountEl = document.getElementById('settlementInfluencerCount');
   const paidOrdersEl = document.getElementById('settlementPaidOrders');
   const totalSalesEl = document.getElementById('settlementTotalSales');
   const totalCommissionEl = document.getElementById('settlementTotalCommission');
 
-  if (influencerCountEl) influencerCountEl.textContent = summary.total_influencers || 0;
-  if (paidOrdersEl) paidOrdersEl.textContent = summary.total_paid_orders || 0;
-  if (totalSalesEl) totalSalesEl.textContent = adminMoney(summary.total_sales || 0);
-  if (totalCommissionEl) totalCommissionEl.textContent = adminMoney(summary.total_commission || 0);
-
-  const settlements = Array.isArray(data.settlements) ? data.settlements : [];
+  if (influencerCountEl) influencerCountEl.textContent = totalInfluencers;
+  if (paidOrdersEl) paidOrdersEl.textContent = totalPaidOrders;
+  if (totalSalesEl) totalSalesEl.textContent = adminMoney(totalSales);
+  if (totalCommissionEl) totalCommissionEl.textContent = adminMoney(totalCommission);
 
   if (!settlements.length) {
     tableBody.innerHTML = `
@@ -992,7 +1030,7 @@ async function loadAdminSettlements() {
       <tr>
         <td><strong>${row.ref_code || '-'}</strong></td>
         <td>${row.influencer_name || '-'}</td>
-        <td>${row.paid_orders || 0}</td>
+        <td>${row.paid_orders || row.paid_order_count || 0}</td>
         <td>${adminMoney(row.total_sales || 0)}</td>
         <td>${adminMoney(row.total_commission || 0)}</td>
         <td>${adminDate(row.latest_order_at)}</td>
