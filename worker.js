@@ -45,6 +45,81 @@ async function readJson(request) {
     }
 }
 
+function getAdminSecret(env) {
+    return env.ADMIN_TOKEN_SECRET || 'grvn-local-admin-secret';
+}
+
+async function createAdminToken(env) {
+    const expiresAt = Date.now() + 1000 * 60 * 60 * 12;
+    const raw = `${expiresAt}.${getAdminSecret(env)}`;
+    const encoded = btoa(raw);
+
+    return `${expiresAt}.${encoded}`;
+}
+
+function verifyAdminToken(request, env) {
+    const auth = request.headers.get('Authorization') || '';
+    const token = auth.replace('Bearer ', '').trim();
+
+    if (!token) return false;
+
+    const parts = token.split('.');
+    if (parts.length < 2) return false;
+
+    const expiresAt = Number(parts[0]);
+    const encoded = parts.slice(1).join('.');
+
+    if (!Number.isFinite(expiresAt) || Date.now() > expiresAt) return false;
+
+    const expectedRaw = `${expiresAt}.${getAdminSecret(env)}`;
+    const expectedEncoded = btoa(expectedRaw);
+
+    return encoded === expectedEncoded;
+}
+
+function requireAdmin(request, env) {
+    if (verifyAdminToken(request, env)) {
+        return null;
+    }
+
+    return jsonResponse(request, env, {
+        success: false,
+        error: 'Admin authorization required'
+    }, 401);
+}
+
+async function adminLogin(request, env) {
+    const payload = await readJson(request);
+
+    const id = String(payload.id || payload.username || '').trim();
+    const password = String(payload.password || payload.pw || '').trim();
+
+    const adminId = String(env.ADMIN_ID || '').trim();
+    const adminPassword = String(env.ADMIN_PASSWORD || '').trim();
+
+    if (!adminId || !adminPassword) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: 'Admin credentials are not configured'
+        }, 500);
+    }
+
+    if (id !== adminId || password !== adminPassword) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: 'Invalid admin credentials'
+        }, 401);
+    }
+
+    const token = await createAdminToken(env);
+
+    return jsonResponse(request, env, {
+        success: true,
+        token,
+        expires_in: 60 * 60 * 12
+    });
+}
+
 async function insertAffiliateEvent(request, env) {
     if (!env.SUPABASE_URL) {
         return jsonResponse(request, env, {
@@ -1805,6 +1880,342 @@ async function verifyPortOnePayment(request, env) {
 
 /* Admin 상품 API 함수 추가 끝 */
 
+async function cancelPortOnePayment(request, env) {
+    if (!env.SUPABASE_URL) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_URL"
+        }, 500);
+    }
+
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_SERVICE_ROLE_KEY"
+        }, 500);
+    }
+
+    if (!env.PORTONE_API_SECRET) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing PORTONE_API_SECRET"
+        }, 500);
+    }
+
+    const payload = await readJson(request);
+
+    const orderNo = payload.order_no || payload.orderNo || "";
+    const paymentIdFromClient = payload.payment_id || payload.paymentId || "";
+    const reason = payload.reason || "관리자 결제 취소";
+
+    if (!orderNo && !paymentIdFromClient) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "order_no or payment_id is required",
+            received: payload
+        }, 400);
+    }
+
+    /*
+      1) 주문 조회
+    */
+    let order = null;
+
+    if (orderNo) {
+        const orderParams = new URLSearchParams();
+        orderParams.set("select", "*");
+        orderParams.set("order_no", `eq.${orderNo}`);
+        orderParams.set("limit", "1");
+
+        const orderEndpoint = getSupabaseEndpoint(
+            env,
+            `/rest/v1/orders?${orderParams.toString()}`
+        );
+
+        const orderRes = await fetch(orderEndpoint, {
+            method: "GET",
+            headers: supabaseHeaders(env)
+        });
+
+        const orderText = await orderRes.text();
+
+        if (!orderRes.ok) {
+            return jsonResponse(request, env, {
+                success: false,
+                error: "Order fetch failed",
+                status: orderRes.status,
+                detail: orderText,
+                endpoint: orderEndpoint
+            }, 500);
+        }
+
+        const orders = orderText ? JSON.parse(orderText) : [];
+
+        if (orders.length) {
+            order = orders[0];
+        }
+    }
+
+    if (!order && !paymentIdFromClient) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Order not found",
+            order_no: orderNo
+        }, 404);
+    }
+
+    /*
+      2) payments 테이블에서 결제정보 조회
+    */
+    let payment = null;
+
+    if (order && order.id) {
+        const paymentParams = new URLSearchParams();
+        paymentParams.set("select", "*");
+        paymentParams.set("order_id", `eq.${order.id}`);
+        paymentParams.set("limit", "1");
+
+        const paymentEndpoint = getSupabaseEndpoint(
+            env,
+            `/rest/v1/payments?${paymentParams.toString()}`
+        );
+
+        const paymentRes = await fetch(paymentEndpoint, {
+            method: "GET",
+            headers: supabaseHeaders(env)
+        });
+
+        const paymentText = await paymentRes.text();
+
+        if (!paymentRes.ok) {
+            return jsonResponse(request, env, {
+                success: false,
+                error: "Payment fetch failed",
+                status: paymentRes.status,
+                detail: paymentText,
+                endpoint: paymentEndpoint
+            }, 500);
+        }
+
+        const payments = paymentText ? JSON.parse(paymentText) : [];
+
+        if (payments.length) {
+            payment = payments[0];
+        }
+    }
+
+    if (!payment && paymentIdFromClient) {
+        const paymentParams = new URLSearchParams();
+        paymentParams.set("select", "*");
+        paymentParams.set("payment_id", `eq.${paymentIdFromClient}`);
+        paymentParams.set("limit", "1");
+
+        const paymentEndpoint = getSupabaseEndpoint(
+            env,
+            `/rest/v1/payments?${paymentParams.toString()}`
+        );
+
+        const paymentRes = await fetch(paymentEndpoint, {
+            method: "GET",
+            headers: supabaseHeaders(env)
+        });
+
+        const paymentText = await paymentRes.text();
+
+        if (paymentRes.ok) {
+            const payments = paymentText ? JSON.parse(paymentText) : [];
+            if (payments.length) {
+                payment = payments[0];
+            }
+        }
+    }
+
+    if (!payment) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Payment not found",
+            order_no: orderNo,
+            payment_id: paymentIdFromClient
+        }, 404);
+    }
+
+    /*
+      이미 취소된 결제면 성공 처리
+    */
+    const currentPaymentStatus = String(payment.payment_status || "").toUpperCase();
+
+    if (currentPaymentStatus === "CANCELLED" || currentPaymentStatus === "CANCELED") {
+        return jsonResponse(request, env, {
+            success: true,
+            already_cancelled: true,
+            message: "Payment already cancelled",
+            order,
+            payment
+        });
+    }
+
+    /*
+      PortOne 결제 ID 결정
+      기존 PortOne 구조에서는 payment_id가 PortOne paymentId입니다.
+    */
+    const portonePaymentId =
+        payment.payment_id ||
+        paymentIdFromClient ||
+        order?.order_no ||
+        "";
+
+    if (!portonePaymentId) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "PortOne payment_id is missing",
+            order,
+            payment
+        }, 400);
+    }
+
+    /*
+      3) PortOne 결제취소 요청
+    */
+    const portoneCancelEndpoint =
+        `https://api.portone.io/payments/${encodeURIComponent(portonePaymentId)}/cancel`;
+
+    let cancelResult = null;
+    let portoneCancelText = "";
+
+    try {
+        const portoneCancelRes = await fetch(portoneCancelEndpoint, {
+            method: "POST",
+            headers: {
+                "Authorization": `PortOne ${env.PORTONE_API_SECRET}`,
+                "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+                reason
+            })
+        });
+
+        portoneCancelText = await portoneCancelRes.text();
+
+        if (!portoneCancelRes.ok) {
+            return jsonResponse(request, env, {
+                success: false,
+                error: "PortOne cancel failed",
+                status: portoneCancelRes.status,
+                statusText: portoneCancelRes.statusText,
+                detail: portoneCancelText,
+                payment_id: portonePaymentId,
+                endpoint: portoneCancelEndpoint
+            }, 500);
+        }
+
+        cancelResult = portoneCancelText ? JSON.parse(portoneCancelText) : null;
+    } catch (err) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Worker could not reach PortOne cancel endpoint",
+            detail: String(err),
+            payment_id: portonePaymentId,
+            endpoint: portoneCancelEndpoint
+        }, 500);
+    }
+
+    /*
+      4) payments.payment_status = CANCELLED 변경
+    */
+    const paymentUpdateParams = new URLSearchParams();
+    paymentUpdateParams.set("id", `eq.${payment.id}`);
+
+    const paymentUpdateEndpoint = getSupabaseEndpoint(
+        env,
+        `/rest/v1/payments?${paymentUpdateParams.toString()}`
+    );
+
+    const paymentUpdateRes = await fetch(paymentUpdateEndpoint, {
+        method: "PATCH",
+        headers: {
+            ...supabaseHeaders(env),
+            "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+            payment_status: "CANCELLED",
+            raw_payload: {
+                previous_raw_payload: payment.raw_payload || null,
+                cancel_response: cancelResult,
+                cancel_reason: reason,
+                cancelled_at: new Date().toISOString(),
+                client_payload: payload
+            },
+            updated_at: new Date().toISOString()
+        })
+    });
+
+    const paymentUpdateText = await paymentUpdateRes.text();
+
+    if (!paymentUpdateRes.ok) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Payment status update failed",
+            status: paymentUpdateRes.status,
+            detail: paymentUpdateText,
+            endpoint: paymentUpdateEndpoint
+        }, 500);
+    }
+
+    const updatedPayments = paymentUpdateText ? JSON.parse(paymentUpdateText) : [];
+    const updatedPayment = Array.isArray(updatedPayments) ? updatedPayments[0] : updatedPayments;
+
+    /*
+      5) orders.status = cancelled 변경
+    */
+    let updatedOrder = order;
+
+    if (order && order.id) {
+        const orderUpdateParams = new URLSearchParams();
+        orderUpdateParams.set("id", `eq.${order.id}`);
+
+        const orderUpdateEndpoint = getSupabaseEndpoint(
+            env,
+            `/rest/v1/orders?${orderUpdateParams.toString()}`
+        );
+
+        const orderUpdateRes = await fetch(orderUpdateEndpoint, {
+            method: "PATCH",
+            headers: {
+                ...supabaseHeaders(env),
+                "Prefer": "return=representation"
+            },
+            body: JSON.stringify({
+                status: "cancelled",
+                updated_at: new Date().toISOString()
+            })
+        });
+
+        const orderUpdateText = await orderUpdateRes.text();
+
+        if (!orderUpdateRes.ok) {
+            return jsonResponse(request, env, {
+                success: false,
+                error: "Order status update failed",
+                status: orderUpdateRes.status,
+                detail: orderUpdateText,
+                payment: updatedPayment,
+                endpoint: orderUpdateEndpoint
+            }, 500);
+        }
+
+        const updatedOrders = orderUpdateText ? JSON.parse(orderUpdateText) : [];
+        updatedOrder = Array.isArray(updatedOrders) ? updatedOrders[0] : updatedOrders;
+    }
+
+    return jsonResponse(request, env, {
+        success: true,
+        message: "Payment cancelled",
+        order: updatedOrder,
+        payment: updatedPayment,
+        portone: cancelResult
+    });
+}
+
 async function handleTossPaymentConfirm(request, env) {
     try {
         const body = await readJson(request);
@@ -2338,6 +2749,245 @@ async function listAdminOrders(request, env) {
     });
 }
 
+async function listInfluencerSummary(request, env) {
+    if (!env.SUPABASE_URL) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_URL"
+        }, 500);
+    }
+
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_SERVICE_ROLE_KEY"
+        }, 500);
+    }
+
+    const url = new URL(request.url);
+    const rawCode =
+        url.searchParams.get("code") ||
+        url.searchParams.get("ref_code") ||
+        url.searchParams.get("aff") ||
+        "";
+
+    if (!rawCode) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "code is required"
+        }, 400);
+    }
+
+    const code = String(rawCode).trim().toUpperCase();
+
+    /*
+      1) 해당 코드의 결제완료 주문만 조회
+    */
+    const orderParams = new URLSearchParams();
+    orderParams.set("select", "*");
+    orderParams.set("ref_code", `eq.${code}`);
+    orderParams.set("status", "eq.paid");
+    orderParams.set("order", "created_at.desc");
+    orderParams.set("limit", "100");
+
+    const ordersEndpoint = getSupabaseEndpoint(
+        env,
+        `/rest/v1/orders?${orderParams.toString()}`
+    );
+
+    let ordersRes;
+    let ordersText = "";
+
+    try {
+        ordersRes = await fetch(ordersEndpoint, {
+            method: "GET",
+            headers: supabaseHeaders(env)
+        });
+
+        ordersText = await ordersRes.text();
+    } catch (err) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Worker could not fetch influencer orders",
+            detail: String(err),
+            endpoint: ordersEndpoint
+        }, 500);
+    }
+
+    if (!ordersRes.ok) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Influencer orders fetch failed",
+            status: ordersRes.status,
+            statusText: ordersRes.statusText,
+            detail: ordersText,
+            endpoint: ordersEndpoint
+        }, 500);
+    }
+
+    let orders = [];
+
+    try {
+        orders = ordersText ? JSON.parse(ordersText) : [];
+    } catch (err) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Influencer orders response JSON parse failed",
+            raw: ordersText,
+            detail: String(err)
+        }, 500);
+    }
+
+    if (!orders.length) {
+        return jsonResponse(request, env, {
+            success: true,
+            code,
+            summary: {
+                paid_orders: 0,
+                total_sales: 0,
+                total_commission: 0,
+                average_order_amount: 0
+            },
+            products: [],
+            orders: []
+        });
+    }
+
+    const orderIds = orders.map((order) => order.id).filter(Boolean);
+
+    /*
+      2) order_items 조회
+    */
+    const itemParams = new URLSearchParams();
+    itemParams.set("select", "*");
+    itemParams.set("order_id", `in.(${orderIds.join(",")})`);
+
+    const itemsEndpoint = getSupabaseEndpoint(
+        env,
+        `/rest/v1/order_items?${itemParams.toString()}`
+    );
+
+    let items = [];
+
+    try {
+        const itemsRes = await fetch(itemsEndpoint, {
+            method: "GET",
+            headers: supabaseHeaders(env)
+        });
+
+        const itemsText = await itemsRes.text();
+
+        if (!itemsRes.ok) {
+            return jsonResponse(request, env, {
+                success: false,
+                error: "Influencer order items fetch failed",
+                status: itemsRes.status,
+                statusText: itemsRes.statusText,
+                detail: itemsText,
+                endpoint: itemsEndpoint
+            }, 500);
+        }
+
+        items = itemsText ? JSON.parse(itemsText) : [];
+    } catch (err) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Worker could not fetch influencer order items",
+            detail: String(err),
+            endpoint: itemsEndpoint
+        }, 500);
+    }
+
+    /*
+      3) order_id 기준으로 item 묶기
+    */
+    const itemsByOrderId = new Map();
+
+    for (const item of items) {
+        const list = itemsByOrderId.get(item.order_id) || [];
+        list.push(item);
+        itemsByOrderId.set(item.order_id, list);
+    }
+
+    const mergedOrders = orders.map((order) => {
+        const orderItems = itemsByOrderId.get(order.id) || [];
+        const firstItem = orderItems[0] || null;
+
+        return {
+            order_no: order.order_no,
+            status: order.status,
+            ref_code: order.ref_code,
+            influencer_name: order.influencer_name,
+            payment_total: Number(order.payment_total || 0),
+            commission_amount: Number(order.commission_amount || 0),
+            created_at: order.created_at,
+            product_name: firstItem?.product_name || "",
+            product_slug: firstItem?.product_slug || "",
+            brand: firstItem?.brand || "",
+            qty: firstItem?.qty || 0,
+            items: orderItems
+        };
+    });
+
+    /*
+      4) 요약 계산
+    */
+    const totalSales = mergedOrders.reduce(
+        (sum, order) => sum + Number(order.payment_total || 0),
+        0
+    );
+
+    const totalCommission = mergedOrders.reduce(
+        (sum, order) => sum + Number(order.commission_amount || 0),
+        0
+    );
+
+    const paidOrders = mergedOrders.length;
+
+    const averageOrderAmount = paidOrders
+        ? Math.round(totalSales / paidOrders)
+        : 0;
+
+    /*
+      5) 상품별 매출 요약
+    */
+    const productMap = new Map();
+
+    for (const order of mergedOrders) {
+        const key = order.product_slug || order.product_name || "unknown";
+
+        const prev = productMap.get(key) || {
+            product_slug: order.product_slug,
+            product_name: order.product_name,
+            brand: order.brand,
+            orders: 0,
+            sales: 0,
+            commission: 0
+        };
+
+        prev.orders += 1;
+        prev.sales += Number(order.payment_total || 0);
+        prev.commission += Number(order.commission_amount || 0);
+
+        productMap.set(key, prev);
+    }
+
+    const products = Array.from(productMap.values());
+
+    return jsonResponse(request, env, {
+        success: true,
+        code,
+        summary: {
+            paid_orders: paidOrders,
+            total_sales: totalSales,
+            total_commission: totalCommission,
+            average_order_amount: averageOrderAmount
+        },
+        products,
+        orders: mergedOrders
+    });
+}
+
 async function listAdminSettlements(request, env) {
     if (!env.SUPABASE_URL) {
         return jsonResponse(request, env, {
@@ -2450,13 +3100,17 @@ export default {
             return jsonResponse(request, env, {
                 status: "ok",
                 service: "grvn-api",
-                version: "toss-payments-v1",
+                version: "admin-auth-cancel-v1",
                 message: "GRVN backend API is running"
             });
         }
 
         if (url.pathname === "/api/payments/confirm" && request.method === "POST") {
             return handleTossPaymentConfirm(request, env);
+        }
+
+        if (url.pathname === "/api/admin/login" && request.method === "POST") {
+            return adminLogin(request, env);
         }
 
         if (url.pathname === "/debug/env") {
@@ -2474,13 +3128,14 @@ export default {
         if (url.pathname === "/") {
             return jsonResponse(request, env, {
                 service: "grvn-api",
-                version: "toss-payments-v1",
+                version: "admin-auth-cancel-v1",
                 available: [
                     "/health",
                     "/debug/env",
                     "POST /api/events",
                     "GET /api/products",
                     "GET /api/products/:slug",
+                    "POST /api/admin/login",
                     "GET /api/admin/products",
                     "POST /api/admin/products",
                     "POST /api/admin/products/inactive",
@@ -2490,8 +3145,10 @@ export default {
                     "GET /api/admin/settlements",
                     "POST /api/orders",
                     "GET /api/orders/:order_no",
+                    "GET /api/influencer/summary",
                     "POST /api/payments/confirm",
-                    "POST /api/payments/verify"
+                    "POST /api/payments/verify",
+                    "POST /api/payments/cancel"
                 ]
             });
         }
@@ -2509,30 +3166,48 @@ export default {
         }
 
         if (url.pathname === "/api/admin/products" && request.method === "GET") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
             return listAdminProducts(request, env);
         }
 
         if (url.pathname === "/api/admin/products" && request.method === "POST") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
             return saveAdminProduct(request, env);
         }
 
         if (url.pathname === "/api/admin/orders" && request.method === "GET") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
             return listAdminOrders(request, env);
         }
 
+        if (url.pathname === "/api/influencer/summary" && request.method === "GET") {
+            return listInfluencerSummary(request, env);
+        }
+
         if (url.pathname === "/api/admin/settlements" && request.method === "GET") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
             return listAdminSettlements(request, env);
         }
 
         if (url.pathname === "/api/admin/products/inactive" && request.method === "POST") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
             return inactiveAdminProduct(request, env);
         }
 
         if (url.pathname === "/api/admin/product-options" && request.method === "GET") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
             return listAdminProductOptions(request, env);
         }
 
         if (url.pathname === "/api/admin/product-options" && request.method === "POST") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
             return saveAdminProductOptions(request, env);
         }
 
@@ -2547,6 +3222,12 @@ export default {
 
         if (url.pathname === "/api/payments/verify" && request.method === "POST") {
             return verifyPortOnePayment(request, env);
+        }
+
+        if (url.pathname === "/api/payments/cancel" && request.method === "POST") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
+            return cancelPortOnePayment(request, env);
         }
 
         return jsonResponse(request, env, {
