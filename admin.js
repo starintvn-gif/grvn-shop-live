@@ -1,11 +1,8 @@
 'use strict';
 
 const ADMIN_SESSION_KEY = 'grvn_admin_session';
+const ADMIN_TOKEN_KEY = 'grvn_admin_token';
 const ADMIN_PRODUCT_KEY = 'stn_admin_products';
-const ADMIN_USERS = {
-  mike: '0806',
-  woojung: '1234'
-};
 
 let API_PRODUCTS = [];
 const $ = id => document.getElementById(id);
@@ -23,6 +20,48 @@ function getApiBase() {
     localStorage.getItem('grvn_api_base') ||
     localStorage.getItem('stn_api_base') ||
     '';
+}
+
+function getAdminToken() {
+  return localStorage.getItem(ADMIN_TOKEN_KEY) || '';
+}
+
+function setAdminToken(token) {
+  if (token) {
+    localStorage.setItem(ADMIN_TOKEN_KEY, token);
+  }
+}
+
+function clearAdminToken() {
+  localStorage.removeItem(ADMIN_TOKEN_KEY);
+  localStorage.removeItem(ADMIN_SESSION_KEY);
+}
+
+async function adminFetch(path, options = {}) {
+  const apiBase = getApiBase() || 'https://api.grvn.shop';
+  const token = getAdminToken();
+
+  const headers = {
+    ...(options.headers || {}),
+    'Authorization': `Bearer ${token}`
+  };
+
+  if (options.body && !headers['Content-Type']) {
+    headers['Content-Type'] = 'application/json';
+  }
+
+  const res = await fetch(`${apiBase}${path}`, {
+    ...options,
+    headers
+  });
+
+  if (res.status === 401) {
+    clearAdminToken();
+    showLogin();
+    throw new Error('관리자 인증이 만료되었거나 필요합니다. 다시 로그인하세요.');
+  }
+
+  return res;
 }
 
 function normalizeApiProduct(apiProduct) {
@@ -103,7 +142,7 @@ async function fetchAdminProductsFromApi() {
   if (!apiBase) return [];
 
   try {
-    const res = await fetch(`${apiBase}/api/admin/products`);
+    const res = await adminFetch('/api/admin/products');
 
     if (!res.ok) {
       throw new Error(`Admin products API failed: ${res.status}`);
@@ -131,7 +170,7 @@ async function saveAdminProductToApi(product) {
     throw new Error('GRVN_API_BASE가 없습니다.');
   }
 
-  const res = await fetch(`${apiBase}/api/admin/products`, {
+  const res = await adminFetch('/api/admin/products', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -161,7 +200,7 @@ async function inactiveAdminProductToApi(productId) {
     throw new Error('비활성화할 상품 ID가 없습니다.');
   }
 
-  const res = await fetch(`${apiBase}/api/admin/products/inactive`, {
+  const res = await adminFetch('/api/admin/products/inactive', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -195,7 +234,7 @@ async function saveAdminProductOptionsToApi(productId, options) {
     throw new Error('저장할 옵션이 없습니다.');
   }
 
-  const res = await fetch(`${apiBase}/api/admin/product-options`, {
+  const res = await adminFetch('/api/admin/product-options', {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json'
@@ -349,7 +388,9 @@ function allProducts() {
   return Array.from(map.values());
 }
 function showToast(msg) { toast(msg); }
-function isLoggedIn() { return localStorage.getItem(ADMIN_SESSION_KEY) === 'ok'; }
+function isLoggedIn() {
+  return localStorage.getItem(ADMIN_SESSION_KEY) === 'ok' && !!getAdminToken();
+}
 async function showApp() {
   $('loginPanel')?.classList.add('hidden');
   $('adminApp')?.classList.remove('hidden');
@@ -709,8 +750,28 @@ function bindEvents() {
     const id = $('adminId').value.trim();
     const pw = $('adminPw').value.trim();
 
-    if (ADMIN_USERS[id] === pw) {
+    const apiBase = getApiBase() || 'https://api.grvn.shop';
+
+    try {
+      const res = await fetch(`${apiBase}/api/admin/login`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          id,
+          password: pw
+        })
+      });
+
+      const data = await res.json();
+
+      if (!res.ok || !data.success || !data.token) {
+        throw new Error(data.error || '관리자 계정을 확인하세요.');
+      }
+
       localStorage.setItem(ADMIN_SESSION_KEY, 'ok');
+      setAdminToken(data.token);
 
       await showApp();
 
@@ -718,13 +779,14 @@ function bindEvents() {
       $('adminSettlementsSection')?.classList.remove('hidden');
 
       showToast('관리자 로그인 완료');
-    } else {
-      alert('관리자 계정을 확인하세요.');
+    } catch (err) {
+      console.error('[GRVN ADMIN] 로그인 실패:', err);
+      alert(err.message || '관리자 계정을 확인하세요.');
     }
   });
 
   $('logoutBtn')?.addEventListener('click', () => {
-    localStorage.removeItem(ADMIN_SESSION_KEY);
+    clearAdminToken();
     showLogin();
 
     $('adminOrdersSection')?.classList.add('hidden');
@@ -863,7 +925,7 @@ async function loadAdminOrders() {
   let data;
 
   try {
-    const res = await fetch(`${apiBase}/api/admin/orders?limit=50`);
+    const res = await adminFetch('/api/admin/orders?limit=50');
 
     data = await res.json();
 
@@ -1025,7 +1087,7 @@ async function loadAdminSettlements() {
   let data;
 
   try {
-    const res = await fetch(`${apiBase}/api/admin/settlements`);
+    const res = await adminFetch('/api/admin/settlements');
     data = await res.json();
 
     if (!res.ok || !data.success) {
@@ -1131,7 +1193,7 @@ async function cancelAdminPayment(orderNo) {
     'https://api.grvn.shop';
 
   try {
-    const res = await fetch(`${apiBase}/api/payments/cancel`, {
+    const res = await adminFetch('/api/payments/cancel', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json'
