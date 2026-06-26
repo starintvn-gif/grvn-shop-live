@@ -815,6 +815,32 @@ function getOrderStatusText(status) {
   return status || '-';
 }
 
+function getPaymentStatusText(status) {
+  const normalized = String(status || '').toUpperCase();
+
+  if (normalized === 'DONE') return '결제완료';
+  if (normalized === 'PAID') return '결제완료';
+  if (normalized === 'PAYED') return '결제완료';
+  if (normalized === 'CANCELLED') return '취소완료';
+  if (normalized === 'CANCELED') return '취소완료';
+  if (normalized === 'FAILED') return '결제실패';
+
+  return '결제대기';
+}
+
+function getPaymentStatusClass(status) {
+  const normalized = String(status || '').toUpperCase();
+
+  if (normalized === 'DONE') return 'payment-paid';
+  if (normalized === 'PAID') return 'payment-paid';
+  if (normalized === 'PAYED') return 'payment-paid';
+  if (normalized === 'CANCELLED') return 'payment-cancelled';
+  if (normalized === 'CANCELED') return 'payment-cancelled';
+  if (normalized === 'FAILED') return 'payment-failed';
+
+  return 'payment-pending';
+}
+
 async function loadAdminOrders() {
   const tableBody = document.getElementById('adminOrdersTableBody');
 
@@ -943,7 +969,11 @@ async function loadAdminOrders() {
       <td>${adminMoney(order.payment_total || 0)}</td>
       <td>${adminMoney(order.commission_amount || 0)}</td>
       <td>${order.ref_code || '-'}</td>
-      <td>${order.payment_status || '-'}</td>
+      <td>
+        <span class="payment-status ${getPaymentStatusClass(order.payment_status)}">
+          ${getPaymentStatusText(order.payment_status)}
+        </span>
+      </td>
       <td>${adminDate(order.created_at)}</td>
       <td>${actionHtml}</td>
     </tr>

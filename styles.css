@@ -2658,3 +2658,38 @@ textarea {
         font-size: 14px;
     }
 }
+
+.payment-status {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    padding: 6px 10px;
+    border-radius: 999px;
+    font-size: 12px;
+    font-weight: 800;
+    white-space: nowrap;
+}
+
+.payment-paid {
+    color: #36f08a;
+    background: rgba(31, 190, 108, 0.12);
+    border: 1px solid rgba(31, 190, 108, 0.35);
+}
+
+.payment-cancelled {
+    color: #ff6b6b;
+    background: rgba(231, 76, 60, 0.14);
+    border: 1px solid rgba(231, 76, 60, 0.35);
+}
+
+.payment-pending {
+    color: #f1c40f;
+    background: rgba(241, 196, 15, 0.12);
+    border: 1px solid rgba(241, 196, 15, 0.32);
+}
+
+.payment-failed {
+    color: #ff8a8a;
+    background: rgba(255, 80, 80, 0.12);
+    border: 1px solid rgba(255, 80, 80, 0.32);
+}
