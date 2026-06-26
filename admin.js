@@ -824,7 +824,7 @@ async function loadAdminOrders() {
 
   tableBody.innerHTML = `
     <tr>
-      <td colspan="8">주문 내역을 불러오는 중입니다.</td>
+      <td colspan="9">주문 내역을 불러오는 중입니다.</td>
     </tr>
   `;
 
@@ -849,7 +849,7 @@ async function loadAdminOrders() {
 
     tableBody.innerHTML = `
       <tr>
-        <td colspan="8">주문 내역을 불러오지 못했습니다. Console을 확인하세요.</td>
+        <td colspan="9">주문 내역을 불러오지 못했습니다. Console을 확인하세요.</td>
       </tr>
     `;
 
@@ -898,7 +898,7 @@ async function loadAdminOrders() {
   if (!orders.length) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="8">아직 주문 내역이 없습니다.</td>
+        <td colspan="9">아직 주문 내역이 없습니다.</td>
       </tr>
     `;
     return;
@@ -908,18 +908,46 @@ async function loadAdminOrders() {
     const statusClass = getOrderStatusClass(order.status);
     const statusText = getOrderStatusText(order.status);
 
-    return `
-      <tr>
-        <td><strong>${order.order_no || '-'}</strong></td>
-        <td><span class="status-pill ${statusClass}">${statusText}</span></td>
-        <td>${order.product_name || '-'}</td>
-        <td>${adminMoney(order.payment_total || 0)}</td>
-        <td>${adminMoney(order.commission_amount || 0)}</td>
-        <td>${order.ref_code || '-'}</td>
-        <td>${order.payment_status || '-'}</td>
-        <td>${adminDate(order.created_at)}</td>
-      </tr>
+    const paymentStatus = String(order.payment_status || '').toUpperCase();
+    const orderStatus = String(order.status || '').toLowerCase();
+
+    const canCancel =
+      orderStatus === 'paid' &&
+      paymentStatus === 'PAID';
+
+    let actionHtml = '-';
+
+    if (
+      orderStatus === 'cancelled' ||
+      orderStatus === 'canceled' ||
+      paymentStatus === 'CANCELLED'
+    ) {
+      actionHtml = '<span class="muted">취소완료</span>';
+    } else if (canCancel) {
+      actionHtml = `
+      <button
+        class="btn danger small"
+        type="button"
+        data-cancel-order="${order.order_no || ''}"
+      >
+        결제취소
+      </button>
     `;
+    }
+
+    return `
+    <tr>
+      <td><strong>${order.order_no || '-'}</strong></td>
+      <td><span class="status-pill ${statusClass}">${statusText}</span></td>
+      <td>${order.product_name || '-'}</td>
+      <td>${adminMoney(order.payment_total || 0)}</td>
+      <td>${adminMoney(order.commission_amount || 0)}</td>
+      <td>${order.ref_code || '-'}</td>
+      <td>${order.payment_status || '-'}</td>
+      <td>${adminDate(order.created_at)}</td>
+      <td>${actionHtml}</td>
+    </tr>
+  `;
   }).join('');
 }
 
@@ -1052,4 +1080,65 @@ document.addEventListener('DOMContentLoaded', () => {
   if (refreshSettlementsBtn) {
     refreshSettlementsBtn.addEventListener('click', loadAdminSettlements);
   }
+});
+
+async function cancelAdminPayment(orderNo) {
+  if (!orderNo) {
+    alert('주문번호가 없습니다.');
+    return;
+  }
+
+  const ok = confirm(`${orderNo} 주문을 결제취소 처리할까요?\n\n취소 후 해당 주문은 매출/정산에서 제외됩니다.`);
+
+  if (!ok) {
+    return;
+  }
+
+  const apiBase =
+    window.GRVN_API_BASE ||
+    localStorage.getItem('grvn_api_base') ||
+    localStorage.getItem('stn_api_base') ||
+    'https://api.grvn.shop';
+
+  try {
+    const res = await fetch(`${apiBase}/api/payments/cancel`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        order_no: orderNo,
+        reason: '관리자 화면 결제 취소'
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      console.error('[GRVN ADMIN] 결제취소 실패:', data);
+      alert(`결제취소 실패: ${data.error || data.message || '알 수 없는 오류'}`);
+      return;
+    }
+
+    alert('결제취소가 완료되었습니다.');
+
+    await loadAdminOrders();
+    await loadAdminSettlements();
+
+  } catch (err) {
+    console.error('[GRVN ADMIN] 결제취소 요청 오류:', err);
+    alert('결제취소 요청 중 오류가 발생했습니다. Console을 확인하세요.');
+  }
+}
+
+document.addEventListener('click', (event) => {
+  const cancelBtn = event.target.closest('[data-cancel-order]');
+
+  if (!cancelBtn) {
+    return;
+  }
+
+  const orderNo = cancelBtn.getAttribute('data-cancel-order');
+
+  cancelAdminPayment(orderNo);
 });
