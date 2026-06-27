@@ -6,27 +6,54 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>결제 승인 처리 중 | GRVN</title>
     <meta name="description" content="GRVN 결제 승인 처리 페이지" />
-    <link rel="stylesheet" href="/styles.css?v=20260620-footer-compact-v1" />
+    <link rel="stylesheet" href="/styles.css?v=20260627-payment-result-v1" />
 </head>
 
 <body>
-    <main class="page legal-page">
-        <h1 id="resultTitle">결제 승인 처리 중입니다</h1>
-        <p id="resultMessage" class="muted">
-            결제 정보를 확인하고 있습니다. 잠시만 기다려주세요.
-        </p>
+    <main class="page legal-page payment-result-page">
+        <section class="payment-result-card">
+            <p class="eyebrow">PAYMENT COMPLETE</p>
 
-        <section class="detail-section">
-            <h2>결제 요청 정보</h2>
-            <p><strong>주문번호</strong>: <span id="orderIdText">-</span></p>
-            <p><strong>결제금액</strong>: <span id="amountText">-</span></p>
-            <p><strong>결제키</strong>: <span id="paymentKeyText">-</span></p>
+            <h1 id="resultTitle">결제 승인 처리 중입니다</h1>
+
+            <p id="resultMessage" class="muted">
+                결제 정보를 확인하고 있습니다. 잠시만 기다려주세요.
+            </p>
+
+            <section class="detail-section payment-result-detail">
+                <h2>주문 정보</h2>
+
+                <p>
+                    <strong>주문번호</strong>
+                    <span id="orderIdText">-</span>
+                </p>
+
+                <p>
+                    <strong>결제금액</strong>
+                    <span id="amountText">-</span>
+                </p>
+
+                <p>
+                    <strong>결제키</strong>
+                    <span id="paymentKeyText">-</span>
+                </p>
+            </section>
+
+            <section class="detail-section payment-result-guide">
+                <h2>안내사항</h2>
+                <p>
+                    주문 확인 및 배송 관련 안내는 입력하신 연락처 기준으로 진행됩니다.
+                </p>
+                <p>
+                    결제 또는 주문 확인이 필요한 경우 주문번호를 기준으로 문의해주세요.
+                </p>
+            </section>
+
+            <div class="payment-result-actions">
+                <a class="btn primary" href="/">메인으로 돌아가기</a>
+                <a class="btn dark" href="/product-landing.html">상품 페이지로 돌아가기</a>
+            </div>
         </section>
-
-        <p>
-            <a class="btn" href="/">메인으로 돌아가기</a>
-            <a class="btn primary" href="/product-landing.html">상품 페이지로 돌아가기</a>
-        </p>
     </main>
 
     <script>
@@ -59,7 +86,7 @@
             if (sessionStorage.getItem(confirmKey) === 'ok') {
                 document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
                 document.getElementById('resultMessage').textContent =
-                    '이미 승인 확인이 완료된 결제입니다. 주문이 정상적으로 접수되었습니다.';
+                    '이미 승인 확인이 완료된 결제입니다. 주문은 정상적으로 접수되어 있습니다.';
                 return;
             }
 
@@ -102,7 +129,7 @@
 
                         document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
                         document.getElementById('resultMessage').textContent =
-                            '이미 승인 처리된 결제입니다. 주문이 정상적으로 접수되었습니다.';
+                            '이미 승인 처리된 결제입니다. 주문은 정상적으로 접수되어 있습니다.';
                         return;
                     }
 
@@ -118,7 +145,7 @@
 
                 document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
                 document.getElementById('resultMessage').textContent =
-                    '주문이 정상적으로 접수되었습니다. 결제 및 배송 안내는 고객센터 기준에 따라 안내됩니다.';
+                    '주문이 정상적으로 접수되었습니다. 배송 및 상품 관련 안내는 입력하신 연락처 기준으로 진행됩니다.';
 
             } catch (error) {
                 console.error('[GRVN] 결제 승인 요청 오류:', error);
