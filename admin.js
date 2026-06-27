@@ -65,42 +65,50 @@ async function adminFetch(path, options = {}) {
 }
 
 function normalizeApiProduct(apiProduct) {
+  const fallbackProduct = Array.isArray(STN_PRODUCTS)
+    ? STN_PRODUCTS.find(p => {
+      const apiKey = apiProduct.slug || apiProduct.id;
+      const staticKey = p.slug || p.id;
+      return apiKey && staticKey && apiKey === staticKey;
+    })
+    : null;
+
   return {
     id: apiProduct.slug || apiProduct.id,
     slug: apiProduct.slug || apiProduct.id,
     supabaseId: apiProduct.id,
 
-    category: apiProduct.category || '상품',
-    brand: apiProduct.brand || '',
-    name: apiProduct.name || '',
+    category: apiProduct.category || fallbackProduct?.category || '상품',
+    brand: apiProduct.brand || fallbackProduct?.brand || '',
+    name: apiProduct.name || fallbackProduct?.name || '',
 
-    originalPrice: apiProduct.original_price || 0,
-    price: apiProduct.price || 0,
-    benefitRate: apiProduct.benefit_rate || (
+    originalPrice: apiProduct.original_price || fallbackProduct?.originalPrice || 0,
+    price: apiProduct.price || fallbackProduct?.price || 0,
+    benefitRate: apiProduct.benefit_rate || fallbackProduct?.benefitRate || (
       apiProduct.original_price && apiProduct.price
         ? Math.round((1 - apiProduct.price / apiProduct.original_price) * 100)
         : 0
     ),
-    commission: Number(apiProduct.commission ?? 0.1),
+    commission: Number(apiProduct.commission ?? fallbackProduct?.commission ?? 0.1),
 
-    tag: apiProduct.tag || `${apiProduct.brand || ''} 캠페인`,
-    desc: apiProduct.description || '',
+    tag: apiProduct.tag || fallbackProduct?.tag || `${apiProduct.brand || fallbackProduct?.brand || ''} 캠페인`,
+    desc: apiProduct.description || fallbackProduct?.desc || '',
     options: ['상세페이지 기준 옵션 선택'],
 
-    video: apiProduct.video_url || '',
-    detailImage: apiProduct.detail_image_url || '',
-    thumbnail: apiProduct.thumbnail_url || apiProduct.detail_image_url || '',
+    video: apiProduct.video_url || apiProduct.videoUrl || fallbackProduct?.video || '',
+    detailImage: apiProduct.detail_image_url || apiProduct.detailImage || fallbackProduct?.detailImage || '',
+    thumbnail: apiProduct.thumbnail_url || apiProduct.thumbnail || apiProduct.detail_image_url || fallbackProduct?.thumbnail || fallbackProduct?.detailImage || '',
 
-    sourceUrl: apiProduct.source_url || '',
-    sourceProductCode: apiProduct.source_product_code || '',
-    campaign: apiProduct.campaign || `${slugify(apiProduct.brand || 'grvn')}_affiliate_2026`,
+    sourceUrl: apiProduct.source_url || fallbackProduct?.sourceUrl || '',
+    sourceProductCode: apiProduct.source_product_code || fallbackProduct?.sourceProductCode || '',
+    campaign: apiProduct.campaign || fallbackProduct?.campaign || `${slugify(apiProduct.brand || fallbackProduct?.brand || 'grvn')}_affiliate_2026`,
 
-    defaultClip: apiProduct.default_clip || '',
-    defaultInfluencer: apiProduct.default_influencer || '',
-    defaultAffiliate: apiProduct.default_affiliate || '',
+    defaultClip: apiProduct.default_clip || fallbackProduct?.defaultClip || '',
+    defaultInfluencer: apiProduct.default_influencer || fallbackProduct?.defaultInfluencer || '',
+    defaultAffiliate: apiProduct.default_affiliate || fallbackProduct?.defaultAffiliate || '',
 
     createdAt: apiProduct.created_at || '',
-    updatedAt: apiProduct.created_at || '',
+    updatedAt: apiProduct.updated_at || apiProduct.created_at || '',
     isApiProduct: true
   };
 }
