@@ -297,8 +297,25 @@
   <script>
     window.GRVN_API_BASE = "https://api.grvn.shop";
   </script>
+  <div id="orderDetailModal" class="admin-modal hidden">
+    <div class="admin-modal-backdrop" data-close-order-modal></div>
+
+    <div class="admin-modal-panel">
+      <div class="admin-modal-head">
+        <div>
+          <p class="eyebrow">ORDER DETAIL</p>
+          <h2>주문 상세</h2>
+        </div>
+        <button class="btn small dark" type="button" data-close-order-modal>닫기</button>
+      </div>
+
+      <div id="orderDetailBody" class="admin-modal-body">
+        주문 정보를 불러오는 중입니다.
+      </div>
+    </div>
+  </div>
   <script src="/data.js?v=20260531-admin-mvp"></script>
-  <script src="/admin.js?v=20260627-admin-token-login-v2"></script>
+  <script src="/admin.js?v=20260627-order-detail-v1"></script>
 </body>
 
 </html>

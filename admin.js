@@ -858,6 +858,147 @@ function adminDate(value) {
   }
 }
 
+function getAdminOrdersStore() {
+  return window.__GRVN_ADMIN_ORDERS || [];
+}
+
+function setAdminOrdersStore(orders) {
+  window.__GRVN_ADMIN_ORDERS = Array.isArray(orders) ? orders : [];
+}
+
+function openOrderDetail(orderNo) {
+  const modal = document.getElementById('orderDetailModal');
+  const body = document.getElementById('orderDetailBody');
+
+  if (!modal || !body) {
+    return;
+  }
+
+  const order = getAdminOrdersStore().find(row => row.order_no === orderNo);
+
+  if (!order) {
+    body.innerHTML = '<p class="notice">주문 정보를 찾을 수 없습니다.</p>';
+    modal.classList.remove('hidden');
+    return;
+  }
+
+  const items = Array.isArray(order.items) ? order.items : [];
+  const payments = Array.isArray(order.payments) ? order.payments : [];
+  const firstPayment = payments[0] || {};
+
+  const itemRows = items.length
+    ? items.map(item => `
+      <tr>
+        <td>${escapeAdminHtml(item.product_name || '-')}</td>
+        <td>${escapeAdminHtml(item.option_name || '-')}</td>
+        <td>${escapeAdminHtml(item.option_value || '-')}</td>
+        <td>${Number(item.qty || 0)}</td>
+        <td>${adminMoney(item.total_price || 0)}</td>
+      </tr>
+    `).join('')
+    : `
+      <tr>
+        <td colspan="5">상품 정보가 없습니다.</td>
+      </tr>
+    `;
+
+  body.innerHTML = `
+    <div class="order-detail-grid">
+      <div class="order-detail-box">
+        <b>주문번호</b>
+        <span>${escapeAdminHtml(order.order_no || '-')}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>주문상태</b>
+        <span>${getOrderStatusText(order.status)}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>구매자명</b>
+        <span>${escapeAdminHtml(order.buyer_name || '-')}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>연락처</b>
+        <span>${escapeAdminHtml(order.buyer_phone || '-')}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>이메일</b>
+        <span>${escapeAdminHtml(order.buyer_email || '-')}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>인플루언서 코드</b>
+        <span>${escapeAdminHtml(order.ref_code || '-')}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>결제금액</b>
+        <span>${adminMoney(order.payment_total || 0)}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>예상 수수료</b>
+        <span>${adminMoney(order.commission_amount || 0)}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>결제사</b>
+        <span>${escapeAdminHtml(order.payment_provider || firstPayment.payment_provider || '-')}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>결제 ID</b>
+        <span>${escapeAdminHtml(order.payment_id || firstPayment.payment_id || '-')}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>결제상태</b>
+        <span>${getPaymentStatusText(order.payment_status || firstPayment.payment_status)}</span>
+      </div>
+
+      <div class="order-detail-box">
+        <b>주문일시</b>
+        <span>${adminDate(order.created_at)}</span>
+      </div>
+    </div>
+
+    <div class="order-detail-box">
+      <b>상품/옵션 정보</b>
+      <table class="order-detail-items">
+        <thead>
+          <tr>
+            <th>상품명</th>
+            <th>옵션명</th>
+            <th>옵션값</th>
+            <th>수량</th>
+            <th>금액</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${itemRows}
+        </tbody>
+      </table>
+    </div>
+
+    <div class="order-detail-box">
+      <b>원본 주문 데이터</b>
+      <div class="order-detail-raw">${escapeAdminHtml(JSON.stringify(order.raw_payload || {}, null, 2))}</div>
+    </div>
+  `;
+
+  modal.classList.remove('hidden');
+}
+
+function closeOrderDetail() {
+  const modal = document.getElementById('orderDetailModal');
+  if (modal) {
+    modal.classList.add('hidden');
+  }
+}
+
 function getOrderStatusClass(status) {
   const normalized = String(status || '').toLowerCase();
 
@@ -945,7 +1086,7 @@ async function loadAdminOrders() {
   }
 
   const orders = Array.isArray(data.orders) ? data.orders : [];
-
+  setAdminOrdersStore(orders);
   const paidOrders = orders.filter((order) => {
     const status = String(order.status || '').toLowerCase();
     return status === 'paid';
@@ -1025,7 +1166,11 @@ async function loadAdminOrders() {
 
     return `
     <tr>
-      <td><strong>${order.order_no || '-'}</strong></td>
+      <td>
+        <button class="order-link" type="button" data-order-detail="${order.order_no || ''}">
+          ${order.order_no || '-'}
+        </button>
+      </td>
       <td><span class="status-pill ${statusClass}">${statusText}</span></td>
       <td>${order.product_name || '-'}</td>
       <td>${adminMoney(order.payment_total || 0)}</td>
@@ -1233,4 +1378,20 @@ document.addEventListener('click', (event) => {
   const orderNo = cancelBtn.getAttribute('data-cancel-order');
 
   cancelAdminPayment(orderNo);
+});
+
+document.addEventListener('click', (event) => {
+  const detailBtn = event.target.closest('[data-order-detail]');
+
+  if (detailBtn) {
+    const orderNo = detailBtn.getAttribute('data-order-detail');
+    openOrderDetail(orderNo);
+    return;
+  }
+
+  const closeBtn = event.target.closest('[data-close-order-modal]');
+
+  if (closeBtn) {
+    closeOrderDetail();
+  }
 });
