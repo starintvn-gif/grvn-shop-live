@@ -1219,7 +1219,7 @@ async function loadAdminSettlements() {
 
   tableBody.innerHTML = `
     <tr>
-      <td colspan="7">정산 데이터를 불러오는 중입니다.</td>
+      <td colspan="8">정산 데이터를 불러오는 중입니다.</td>
     </tr>
   `;
 
@@ -1243,7 +1243,7 @@ async function loadAdminSettlements() {
 
     tableBody.innerHTML = `
       <tr>
-        <td colspan="7">정산 데이터를 불러오지 못했습니다. Console을 확인하세요.</td>
+        <td colspan="8">정산 데이터를 불러오지 못했습니다. Console을 확인하세요.</td>
       </tr>
     `;
 
@@ -1281,7 +1281,7 @@ async function loadAdminSettlements() {
   if (!settlements.length) {
     tableBody.innerHTML = `
       <tr>
-        <td colspan="7">아직 정산 대상 데이터가 없습니다.</td>
+        <td colspan="8">아직 정산 대상 데이터가 없습니다.</td>
       </tr>
     `;
     return;
@@ -1300,9 +1300,56 @@ async function loadAdminSettlements() {
         <td>${adminMoney(row.total_commission || 0)}</td>
         <td>${adminDate(row.latest_order_at)}</td>
         <td><span class="settlement-status ${statusClass}">${statusText}</span></td>
+        <td>
+          ${String(row.settlement_status || '').toLowerCase() === 'paid'
+        ? '<span class="muted">정산완료</span>'
+        : `<button class="btn small primary" type="button" data-mark-settlement="${row.ref_code || ''}">정산확정</button>`
+      }
+        </td>
       </tr>
     `;
   }).join('');
+}
+
+async function markSettlementPaid(refCode) {
+  if (!refCode) {
+    alert('정산확정할 인플루언서 코드가 없습니다.');
+    return;
+  }
+
+  const ok = confirm(`${refCode} 코드의 결제완료 주문을 정산완료 처리할까요?`);
+
+  if (!ok) {
+    return;
+  }
+
+  try {
+    const res = await adminFetch('/api/admin/settlements/mark-paid', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        ref_code: refCode,
+        memo: '관리자 화면 정산확정'
+      })
+    });
+
+    const data = await res.json();
+
+    if (!res.ok || !data.success) {
+      console.error('[GRVN ADMIN] 정산확정 실패:', data);
+      alert(`정산확정 실패: ${data.error || data.message || '알 수 없는 오류'}`);
+      return;
+    }
+
+    alert(`${refCode} 정산확정이 완료되었습니다.`);
+
+    await loadAdminSettlements();
+  } catch (err) {
+    console.error('[GRVN ADMIN] 정산확정 요청 오류:', err);
+    alert('정산확정 요청 중 오류가 발생했습니다. Console을 확인하세요.');
+  }
 }
 
 document.addEventListener('DOMContentLoaded', () => {

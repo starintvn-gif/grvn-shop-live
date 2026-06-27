@@ -3067,6 +3067,10 @@ async function listAdminSettlements(request, env) {
         row.total_sales += Number(order.payment_total || 0);
         row.total_commission += Number(order.commission_amount || 0);
 
+        if (String(order.settlement_status || '').toLowerCase() === 'paid') {
+            row.settled_count = Number(row.settled_count || 0) + 1;
+        }
+
         if (!row.influencer_name && order.influencer_name) {
             row.influencer_name = order.influencer_name;
         }
@@ -3076,12 +3080,102 @@ async function listAdminSettlements(request, env) {
         }
     }
 
-    const settlements = Array.from(map.values());
+    const settlements = Array.from(map.values()).map(row => {
+        const settledCount = Number(row.settled_count || 0);
+        const paidOrderCount = Number(row.paid_order_count || 0);
+
+        return {
+            ...row,
+            settlement_status:
+                paidOrderCount > 0 && settledCount === paidOrderCount
+                    ? "paid"
+                    : "pending"
+        };
+    });
 
     return jsonResponse(request, env, {
         success: true,
         count: settlements.length,
         settlements
+    });
+}
+
+async function markAdminSettlementPaid(request, env) {
+    if (!env.SUPABASE_URL) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_URL"
+        }, 500);
+    }
+
+    if (!env.SUPABASE_SERVICE_ROLE_KEY) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Missing SUPABASE_SERVICE_ROLE_KEY"
+        }, 500);
+    }
+
+    const payload = await readJson(request);
+
+    const refCode = String(
+        payload.ref_code ||
+        payload.refCode ||
+        payload.code ||
+        ""
+    ).trim().toUpperCase();
+
+    const memo = payload.memo || "관리자 정산확정";
+
+    if (!refCode) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "ref_code is required",
+            received: payload
+        }, 400);
+    }
+
+    const params = new URLSearchParams();
+    params.set("ref_code", `eq.${refCode}`);
+    params.set("status", "eq.paid");
+
+    const endpoint = getSupabaseEndpoint(
+        env,
+        `/rest/v1/orders?${params.toString()}`
+    );
+
+    const res = await fetch(endpoint, {
+        method: "PATCH",
+        headers: {
+            ...supabaseHeaders(env),
+            "Prefer": "return=representation"
+        },
+        body: JSON.stringify({
+            settlement_status: "paid",
+            settled_at: new Date().toISOString(),
+            settlement_memo: memo,
+            updated_at: new Date().toISOString()
+        })
+    });
+
+    const text = await res.text();
+
+    if (!res.ok) {
+        return jsonResponse(request, env, {
+            success: false,
+            error: "Settlement mark paid failed",
+            status: res.status,
+            detail: text,
+            ref_code: refCode
+        }, 500);
+    }
+
+    const updatedOrders = text ? JSON.parse(text) : [];
+
+    return jsonResponse(request, env, {
+        success: true,
+        ref_code: refCode,
+        count: Array.isArray(updatedOrders) ? updatedOrders.length : 0,
+        orders: updatedOrders
     });
 }
 
@@ -3143,6 +3237,7 @@ export default {
                     "POST /api/admin/product-options",
                     "GET /api/admin/orders",
                     "GET /api/admin/settlements",
+                    "POST /api/admin/settlements/mark-paid",
                     "POST /api/orders",
                     "GET /api/orders/:order_no",
                     "GET /api/influencer/summary",
@@ -3191,6 +3286,12 @@ export default {
             const authError = requireAdmin(request, env);
             if (authError) return authError;
             return listAdminSettlements(request, env);
+        }
+
+        if (url.pathname === "/api/admin/settlements/mark-paid" && request.method === "POST") {
+            const authError = requireAdmin(request, env);
+            if (authError) return authError;
+            return markAdminSettlementPaid(request, env);
         }
 
         if (url.pathname === "/api/admin/products/inactive" && request.method === "POST") {
