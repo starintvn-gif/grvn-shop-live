@@ -1442,3 +1442,15 @@ document.addEventListener('click', (event) => {
     closeOrderDetail();
   }
 });
+
+document.addEventListener('click', (event) => {
+  const settlementBtn = event.target.closest('[data-mark-settlement]');
+
+  if (!settlementBtn) {
+    return;
+  }
+
+  const refCode = settlementBtn.getAttribute('data-mark-settlement');
+
+  markSettlementPaid(refCode);
+});
