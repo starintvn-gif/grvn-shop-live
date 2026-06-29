@@ -255,7 +255,7 @@ function renderProductPage(product) {
   setText('specBenefitPrice', product.price ? money(product.price) : '-');
   setText('specBenefitRate', product.benefitRate ? `${product.benefitRate}%` : '-');
   setText('specClipId', clipId);
-  setText('specCommission', `${Math.round((product.commission || 0.3) * 100)}%`);
+  // setText('specCommission', `${Math.round((product.commission || 0.3) * 100)}%`);
 
   if (optionSelect) {
     const options = Array.isArray(product.options) && product.options.length
@@ -276,6 +276,7 @@ function renderProductPage(product) {
   }
 
   updateSummary();
+  hideCustomerCommissionRows();
 }
 
 function updateSummary() {
@@ -285,11 +286,48 @@ function updateSummary() {
   const optionAdditionalPrice = getSelectedOptionAdditionalPrice();
   const unitPrice = Number(product.price || 0) + optionAdditionalPrice;
   const subtotal = unitPrice * qty;
-  const commission = Math.round(subtotal * (product.commission || 0.3));
 
-  document.getElementById('subtotal').textContent = money(subtotal);
-  document.getElementById('commission').textContent = money(commission);
-  document.getElementById('total').textContent = money(subtotal);
+  const subtotalEl = document.getElementById('subtotal');
+  const totalEl = document.getElementById('total');
+
+  if (subtotalEl) subtotalEl.textContent = money(subtotal);
+  if (totalEl) totalEl.textContent = money(subtotal);
+}
+
+function hideCustomerCommissionRows() {
+  const commissionValueEl = document.getElementById('commission');
+  const specCommissionEl = document.getElementById('specCommission');
+
+  [commissionValueEl, specCommissionEl].forEach((el) => {
+    if (!el) return;
+
+    const row =
+      el.closest('.summary-row') ||
+      el.closest('.spec-row') ||
+      el.closest('li') ||
+      el.closest('tr') ||
+      el.parentElement;
+
+    if (row) {
+      row.style.display = 'none';
+    } else {
+      el.style.display = 'none';
+    }
+  });
+
+  document.querySelectorAll('body *').forEach((el) => {
+    if (!el || !el.childNodes || el.children.length > 3) return;
+
+    const text = (el.textContent || '').trim();
+
+    if (
+      text.includes('인플루언서 예상 수수료') ||
+      text.includes('예상 수수료') ||
+      text.includes('수수료율')
+    ) {
+      el.style.display = 'none';
+    }
+  });
 }
 
 if (qtyInput) {
@@ -401,6 +439,38 @@ async function initProductPage() {
 
   product = await loadProductDetailFromApi(productKey, fallbackProduct);
   renderProductPage(product);
+  bindProductDetailButtons(product);
+}
+
+function bindProductDetailButtons(product) {
+  const detailButton = document.getElementById('openProductWebDetailBtn');
+
+  if (!detailButton) return;
+
+  detailButton.addEventListener('click', () => {
+    const detailUrl =
+      product?.webDetailUrl ||
+      product?.web_detail_url ||
+      product?.detailPageUrl ||
+      product?.detail_page_url ||
+      product?.detailImage ||
+      product?.detail_image ||
+      '';
+
+    const detailImageEl = document.getElementById('detailImage');
+
+    if (detailUrl) {
+      window.open(detailUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (detailImageEl && detailImageEl.src) {
+      window.open(detailImageEl.src, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    alert('상품 상세페이지 정보를 준비 중입니다.');
+  });
 }
 
 initProductPage();
