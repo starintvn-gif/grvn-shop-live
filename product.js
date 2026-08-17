@@ -340,6 +340,174 @@ if (optionSelect) {
 
 const checkoutBtn = document.getElementById('checkoutBtn');
 
+
+/* =========================================================
+   PortOne V2 + KG이니시스 결제
+========================================================= */
+
+async function requestPortOnePayment() {
+  try {
+    if (!product) {
+      toast('상품 정보를 찾을 수 없습니다.');
+      return;
+    }
+
+    if (!window.PortOne) {
+      throw new Error('PortOne V2 SDK가 로드되지 않았습니다.');
+    }
+
+    if (!window.PORTONE_STORE_ID) {
+      throw new Error('PORTONE_STORE_ID가 설정되지 않았습니다.');
+    }
+
+    if (!window.PORTONE_CHANNEL_KEY) {
+      throw new Error('PORTONE_CHANNEL_KEY가 설정되지 않았습니다.');
+    }
+
+    if (checkoutBtn) {
+      checkoutBtn.disabled = true;
+      checkoutBtn.textContent = '결제 준비 중...';
+    }
+
+    const qty = Math.max(1, Number(qtyInput.value) || 1);
+    const selectedOption = getSelectedOption();
+
+    /*
+      1) GRVN 서버에서 pending 주문 먼저 생성
+    */
+    const orderData = await createPendingOrder(
+      product,
+      selectedOption,
+      qty
+    );
+
+    if (!orderData || !orderData.success) {
+      throw new Error('주문 생성에 실패했습니다.');
+    }
+
+    const orderNo =
+      orderData.order?.order_no ||
+      orderData.summary?.order_no;
+
+    const amount =
+      Number(
+        orderData.order?.payment_total ||
+        orderData.summary?.payment_total ||
+        0
+      );
+
+    if (!orderNo) {
+      throw new Error('주문번호를 확인할 수 없습니다.');
+    }
+
+    if (!amount || amount < 100) {
+      throw new Error('결제금액이 올바르지 않습니다.');
+    }
+
+    console.log('[GRVN] KG이니시스 결제 준비:', {
+      orderNo,
+      amount,
+      product: product.name
+    });
+
+    /*
+      2) PortOne V2를 통해 KG이니시스 결제창 호출
+    */
+    const response = await PortOne.requestPayment({
+      storeId: window.PORTONE_STORE_ID,
+      channelKey: window.PORTONE_CHANNEL_KEY,
+
+      paymentId: orderNo,
+      orderName: product.name || 'GRVN 상품',
+
+      totalAmount: amount,
+      currency: 'CURRENCY_KRW',
+      payMethod: 'CARD',
+
+      customer: {
+        fullName: '테스트',
+        phoneNumber: '01000000000',
+        email: 'test@example.com'
+      }
+    });
+
+    console.log('[GRVN] PortOne 결제 응답:', response);
+
+    /*
+      결제창 닫기 또는 결제 실패
+    */
+    if (!response) {
+      throw new Error('결제 응답을 받지 못했습니다.');
+    }
+
+    if (response.code !== undefined) {
+      throw new Error(
+        response.message ||
+        '결제가 취소되었거나 실패했습니다.'
+      );
+    }
+
+    /*
+      3) Cloudflare Worker에서 실제 결제 검증
+    */
+    const verifyRes = await fetch(
+      `${window.GRVN_API_BASE}/api/payments/verify`,
+      {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify({
+          order_no: orderNo,
+          payment_id: orderNo
+        })
+      }
+    );
+
+    const verifyData = await verifyRes.json();
+
+    console.log('[GRVN] 결제 검증 결과:', verifyData);
+
+    if (!verifyRes.ok || !verifyData.success) {
+      throw new Error(
+        verifyData.error ||
+        '결제 검증에 실패했습니다.'
+      );
+    }
+
+    alert('결제가 정상적으로 완료되었습니다.');
+
+    window.location.href =
+      `/payment-success.html?orderNo=${encodeURIComponent(orderNo)}&verified=1`;
+
+  } catch (error) {
+    console.error('[GRVN] KG이니시스 결제 오류:', error);
+
+    alert(
+      error?.message ||
+      '결제 처리 중 문제가 발생했습니다.'
+    );
+
+  } finally {
+    if (checkoutBtn) {
+      checkoutBtn.disabled = false;
+      checkoutBtn.textContent = '구매하기';
+    }
+  }
+}
+
+
+/*
+  구매하기 버튼 → KG이니시스 결제
+*/
+if (checkoutBtn) {
+  checkoutBtn.addEventListener(
+    'click',
+    requestPortOnePayment
+  );
+}
+
+
 async function initProductPage() {
   const productKey = qs('product');
   const fallbackProduct = product || getStaticProducts().find(p =>

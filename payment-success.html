@@ -4,8 +4,8 @@
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>결제 승인 처리 중 | GRVN</title>
-    <meta name="description" content="GRVN 결제 승인 처리 페이지" />
+    <title>결제 완료 | GRVN</title>
+    <meta name="description" content="GRVN 결제 완료 및 주문 확인 페이지" />
     <link rel="stylesheet" href="/styles.css?v=20260627-payment-result-v1" />
 </head>
 
@@ -14,10 +14,10 @@
         <section class="payment-result-card">
             <p class="eyebrow">PAYMENT COMPLETE</p>
 
-            <h1 id="resultTitle">결제 승인 처리 중입니다</h1>
+            <h1 id="resultTitle">결제가 완료되었습니다</h1>
 
             <p id="resultMessage" class="muted">
-                결제 정보를 확인하고 있습니다. 잠시만 기다려주세요.
+                주문 및 결제 상태를 확인하고 있습니다. 잠시만 기다려주세요.
             </p>
 
             <section class="detail-section payment-result-detail">
@@ -34,8 +34,8 @@
                 </p>
 
                 <p>
-                    <strong>결제키</strong>
-                    <span id="paymentKeyText">-</span>
+                    <strong>결제 상태</strong>
+                    <span id="paymentStatusText">확인 완료</span>
                 </p>
             </section>
 
@@ -63,100 +63,103 @@
             return '₩' + Number(value || 0).toLocaleString('ko-KR');
         }
 
-        async function confirmPayment() {
+        async function loadPaymentResult() {
             const params = new URLSearchParams(window.location.search);
 
-            const paymentKey = params.get('paymentKey');
-            const orderId = params.get('orderId');
-            const amount = Number(params.get('amount'));
+            const orderNo = params.get('orderNo');
+            const verified = params.get('verified');
 
-            document.getElementById('paymentKeyText').textContent = paymentKey || '-';
-            document.getElementById('orderIdText').textContent = orderId || '-';
-            document.getElementById('amountText').textContent = amount ? money(amount) : '-';
+            const orderIdText = document.getElementById('orderIdText');
+            const amountText = document.getElementById('amountText');
+            const paymentStatusText = document.getElementById('paymentStatusText');
+            const resultTitle = document.getElementById('resultTitle');
+            const resultMessage = document.getElementById('resultMessage');
 
-            if (!paymentKey || !orderId || !amount) {
-                document.getElementById('resultTitle').textContent = '결제 정보가 올바르지 않습니다';
-                document.getElementById('resultMessage').textContent =
-                    'paymentKey, orderId, amount 값이 누락되었습니다.';
+            if (!orderNo) {
+                resultTitle.textContent = '주문 정보를 확인할 수 없습니다';
+                resultMessage.textContent =
+                    '주문번호가 누락되었습니다. 고객센터로 문의해주세요.';
+
+                if (orderIdText) {
+                    orderIdText.textContent = '-';
+                }
+
+                if (amountText) {
+                    amountText.textContent = '-';
+                }
+
+                if (paymentStatusText) {
+                    paymentStatusText.textContent = '확인 불가';
+                }
+
                 return;
             }
 
-            const confirmKey = `grvn_confirmed_${paymentKey}`;
-
-            if (sessionStorage.getItem(confirmKey) === 'ok') {
-                document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
-                document.getElementById('resultMessage').textContent =
-                    '이미 승인 확인이 완료된 결제입니다. 주문은 정상적으로 접수되어 있습니다.';
-                return;
+            if (orderIdText) {
+                orderIdText.textContent = orderNo;
             }
 
-            let lastOrder = null;
+            if (verified !== '1') {
+                resultTitle.textContent = '결제 확인이 필요합니다';
+                resultMessage.textContent =
+                    '정상적인 결제 완료 경로가 아닙니다. 주문 상태를 확인해주세요.';
 
-            try {
-                const lastOrderRaw = sessionStorage.getItem('grvn_last_order');
-                lastOrder = lastOrderRaw ? JSON.parse(lastOrderRaw) : null;
-            } catch (error) {
-                console.warn('[GRVN] sessionStorage 주문 정보 파싱 실패:', error);
+                if (paymentStatusText) {
+                    paymentStatusText.textContent = '확인 필요';
+                }
             }
 
             try {
-                const res = await fetch(window.GRVN_API_BASE + '/api/payments/confirm', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({
-                        paymentKey,
-                        orderId,
-                        amount,
-                        lastOrder
-                    })
-                });
+                const res = await fetch(
+                    `${window.GRVN_API_BASE}/api/orders/${encodeURIComponent(orderNo)}`
+                );
 
                 const data = await res.json();
 
-                if (!res.ok || !data.success) {
-                    console.error('[GRVN] 결제 승인 응답:', data);
-
-                    const message = data.message || data.error || '';
-
-                    if (
-                        message.includes('이미 처리된 결제') ||
-                        message.includes('이미 처리') ||
-                        message.includes('ALREADY_PROCESSED')
-                    ) {
-                        sessionStorage.setItem(confirmKey, 'ok');
-
-                        document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
-                        document.getElementById('resultMessage').textContent =
-                            '이미 승인 처리된 결제입니다. 주문은 정상적으로 접수되어 있습니다.';
-                        return;
-                    }
-
-                    document.getElementById('resultTitle').textContent = '결제 승인에 실패했습니다';
-                    document.getElementById('resultMessage').textContent =
-                        message || '결제 승인 중 문제가 발생했습니다. 고객센터로 문의해주세요.';
-                    return;
+                if (!res.ok || !data.success || !data.order) {
+                    throw new Error(
+                        data.error ||
+                        '주문 정보를 불러오지 못했습니다.'
+                    );
                 }
 
-                console.log('[GRVN] 결제 승인 성공:', data);
+                const order = data.order;
 
-                sessionStorage.setItem(confirmKey, 'ok');
+                if (amountText) {
+                    amountText.textContent = money(order.payment_total);
+                }
 
-                document.getElementById('resultTitle').textContent = '결제가 완료되었습니다';
-                document.getElementById('resultMessage').textContent =
-                    '주문이 정상적으로 접수되었습니다. 배송 및 상품 관련 안내는 입력하신 연락처 기준으로 진행됩니다.';
+                if (paymentStatusText) {
+                    paymentStatusText.textContent =
+                        String(order.status || '').toLowerCase() === 'paid'
+                            ? '결제 완료'
+                            : order.status || '확인 필요';
+                }
+
+                if (String(order.status || '').toLowerCase() === 'paid') {
+                    resultTitle.textContent = '결제가 완료되었습니다';
+                    resultMessage.textContent =
+                        '주문이 정상적으로 접수되었습니다. 배송 및 상품 관련 안내는 주문 처리 기준에 따라 진행됩니다.';
+                } else {
+                    resultTitle.textContent = '주문 상태를 확인해주세요';
+                    resultMessage.textContent =
+                        `현재 주문 상태는 ${order.status || '확인 중'}입니다.`;
+                }
 
             } catch (error) {
-                console.error('[GRVN] 결제 승인 요청 오류:', error);
+                console.error('[GRVN] 주문 결과 조회 오류:', error);
 
-                document.getElementById('resultTitle').textContent = '결제 승인 요청 중 오류가 발생했습니다';
-                document.getElementById('resultMessage').textContent =
-                    '네트워크 또는 서버 연결 문제로 결제 승인 확인에 실패했습니다. 고객센터로 문의해주세요.';
+                resultTitle.textContent = '주문 정보 확인 중 오류가 발생했습니다';
+                resultMessage.textContent =
+                    '결제 완료 후 주문정보 조회에 문제가 발생했습니다. 주문번호를 기준으로 고객센터에 문의해주세요.';
+
+                if (paymentStatusText) {
+                    paymentStatusText.textContent = '조회 오류';
+                }
             }
         }
 
-        confirmPayment();
+        loadPaymentResult();
     </script>
 </body>
 
