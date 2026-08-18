@@ -15,9 +15,13 @@ function corsHeaders(request, env) {
         "http://localhost:5500"
     ];
 
-    const allowOrigin = allowed.includes(origin)
-        ? origin
-        : (env.ALLOWED_ORIGIN || "https://www.grvn.shop");
+    const isPagesPreview =
+        origin.endsWith(".grvn-shop-live-platform.pages.dev");
+
+    const allowOrigin =
+        allowed.includes(origin) || isPagesPreview
+            ? origin
+            : (env.ALLOWED_ORIGIN || "https://www.grvn.shop");
 
     return {
         "Access-Control-Allow-Origin": allowOrigin,
