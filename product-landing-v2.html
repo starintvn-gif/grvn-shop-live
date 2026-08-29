@@ -1,0 +1,117 @@
+<!doctype html>
+<html lang="ko">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GRVN | 숏폼 제품 구매</title>
+  <meta name="description" content="GRVN 숏폼에서 소개한 제품의 상세정보와 옵션을 확인하고 바로 구매하세요.">
+  <link rel="stylesheet" href="/product-v2.css?v=20260829-v1">
+</head>
+<body>
+  <a class="skip-link" href="#productMain">상품정보로 이동</a>
+  <div class="announcement">GRVN · 14 DAYS CURATED SHORT-FORM COMMERCE</div>
+  <header class="product-header">
+    <a class="wordmark" href="index-v2.html">GRVN</a>
+    <nav><a href="index-v2.html#liveCampaigns">NOW LIVE</a><a href="#productDetail">DETAIL</a><a href="#delivery">DELIVERY</a></nav>
+    <a class="back-link" href="index-v2.html">← BACK</a>
+  </header>
+
+  <main id="productMain" class="product-page">
+    <div class="product-breadcrumb">HOME / SHORT-FORM / <span id="specCategory">PRODUCT</span></div>
+    <section class="purchase-grid" aria-labelledby="productTitle">
+      <div class="media-column">
+        <div class="video-frame">
+          <video id="landingVideo" autoplay muted loop playsinline controls aria-label="상품 숏폼 영상"></video>
+          <span>SHORT-FORM PREVIEW</span>
+        </div>
+        <p>영상에서 확인한 제품을 우측에서 옵션 선택 후 바로 구매할 수 있습니다.</p>
+      </div>
+
+      <div class="purchase-column">
+        <p class="kicker">GRVN CURATED PRODUCT · 14 DAYS ONLY</p>
+        <p class="brand-line" id="specBrand">GRVN</p>
+        <h1 id="productTitle">상품명</h1>
+        <p id="productDesc" class="product-desc">상품 설명</p>
+
+        <div class="price-line">
+          <strong id="priceText">₩0</strong>
+          <del id="originalPriceText"></del>
+        </div>
+        <div class="affiliate-line">Creator code <b id="affCode">GRVN</b></div>
+
+        <div class="purchase-options">
+          <label>옵션<select id="optionSelect"></select></label>
+          <label>수량<input id="qtyInput" type="number" min="1" value="1" inputmode="numeric"></label>
+        </div>
+
+        <div class="order-summary">
+          <div><span>상품금액</span><b id="subtotal">₩0</b></div>
+          <div><span>배송비</span><b>무료</b></div>
+          <div class="total-row"><span>총 결제금액</span><b id="total">₩0</b></div>
+        </div>
+        <button id="checkoutBtn" class="buy-now" type="button">바로 구매</button>
+        <p class="safe-payment">NHN KCP · PortOne V2 안전결제</p>
+
+        <div id="complete" class="complete" role="status" aria-live="polite">
+          <h2>주문 생성 완료</h2><p id="completeText"></p><button type="button" onclick="window.close()">창 닫기</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="detail-layout" id="productDetail">
+      <article class="detail-image-card">
+        <p class="kicker">PRODUCT DETAIL</p>
+        <img id="detailImage" alt="상품 상세페이지 이미지">
+        <p id="detailCaption"></p>
+        <button id="openProductWebDetailBtn" type="button">브랜드 상세정보 확인</button>
+      </article>
+      <aside class="detail-copy-card">
+        <p class="kicker">PRODUCT INFORMATION</p>
+        <h2>제품 상세설명</h2>
+        <p>숏폼에서 소개된 제품의 실제 이미지와 핵심 정보를 확인하세요. 색상과 사이즈는 옵션 선택 영역을 기준으로 주문됩니다.</p>
+        <dl>
+          <div><dt>브랜드</dt><dd id="detailBrand">-</dd></div>
+          <div><dt>카테고리</dt><dd id="detailCat1">-</dd></div>
+          <div><dt>상품 ID</dt><dd id="specProductId">-</dd></div>
+          <div><dt>Clip ID</dt><dd id="specClipId">-</dd></div>
+          <div><dt>커미션</dt><dd id="specCommission">-</dd></div>
+        </dl>
+      </aside>
+    </section>
+
+    <section class="delivery-strip" id="delivery">
+      <div><b>100% 정품</b><span>정품만을 취급합니다</span></div>
+      <div><b>안전한 배송</b><span>결제 완료 후 순차 배송</span></div>
+      <div><b>교환·환불</b><span>수령 후 7일 이내</span></div>
+      <div><b>고객지원</b><span>0507-1475-2010</span></div>
+    </section>
+  </main>
+
+  <footer class="product-footer">
+    <strong>De Platform GRVN</strong>
+    <div class="product-footer-policy"><a href="/terms.html">이용약관</a><a href="/privacy.html">개인정보처리방침</a><a href="/refund.html">교환·반품·환불정책</a></div>
+    <div class="product-footer-grid">
+      <div><i>◇</i><p><b>COMPANY</b><span>디 플랫폼 그루븐</span><span>대표자 정연희</span></p></div>
+      <div><i>▤</i><p><b>BUSINESS</b><span>890-09-03422</span><span>제2026-서울성북-0991호</span></p></div>
+      <div><i>⌖</i><p><b>ADDRESS</b><span>서울특별시 성북구</span><span>삼양로9길 13-7</span></p></div>
+      <div><i>◉</i><p><b>CONTACT</b><a href="tel:050714752010">0507-1475-2010</a><a href="mailto:grvn.shop1004@gmail.com">grvn.shop1004@gmail.com</a></p></div>
+    </div>
+    <div class="product-footer-social" aria-label="GRVN 공식 채널">
+      <a href="https://www.instagram.com/grvn.official" target="_blank" rel="noopener noreferrer" aria-label="Instagram"><svg viewBox="0 0 24 24"><path d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4c0 3.2-2.6 5.8-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8C2 4.6 4.6 2 7.8 2Zm0 2C5.7 4 4 5.7 4 7.8v8.4C4 18.3 5.7 20 7.8 20h8.4c2.1 0 3.8-1.7 3.8-3.8V7.8C20 5.7 18.3 4 16.2 4H7.8Zm4.2 3.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8Z"/></svg></a>
+      <a href="https://www.youtube.com/channel/UCXyoyPy-1ROTga2yTc_uhGA" target="_blank" rel="noopener noreferrer" aria-label="YouTube"><svg viewBox="0 0 24 24"><path d="M21.6 7.1s-.2-1.5-.8-2.1c-.8-.8-1.7-.8-2.1-.9C15.8 3.9 12 3.9 12 3.9s-3.8 0-6.7.2c-.4.1-1.3.1-2.1.9-.6.6-.8 2.1-.8 2.1S2 8.9 2 10.7v1.7c0 1.8.2 3.6.2 3.6s.2 1.5.8 2.1c.8.8 1.8.8 2.3.9 1.7.2 6.7.2 6.7.2s3.8 0 6.7-.2c.4-.1 1.3-.1 2.1-.9.6-.6.8-2.1.8-2.1s.2-1.8.2-3.6v-1.7c0-1.8-.2-3.6-.2-3.6ZM10 14.8V8.7l5.7 3.1-5.7 3Z"/></svg></a>
+      <a href="https://www.grvn.co.kr" target="_blank" rel="noopener noreferrer" aria-label="GRVN Homepage"><svg viewBox="0 0 24 24"><path d="M12 2.2 2.8 10.1l1.3 1.5 1.4-1.2V21h5.2v-6.2h2.6V21h5.2V10.4l1.4 1.2 1.3-1.5L12 2.2Zm4.5 16.8h-1.2v-6.2H8.7V19H7.5V8.7L12 4.9l4.5 3.8V19Z"/></svg></a>
+    </div>
+    <small>© De Platform GRVN. All rights reserved.</small>
+  </footer>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+    window.GRVN_API_BASE="https://api.grvn.shop";
+    window.PORTONE_STORE_ID="store-b96e11f8-4b49-436e-88ba-d3bef0d064d7";
+    window.PORTONE_CHANNEL_KEY="channel-key-7ca5849c-580e-4ea3-a7f5-87d43bc9f41d";
+  </script>
+  <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
+  <script src="/data.js?v=20260829-product-v2"></script>
+  <script src="/product.js?v=20260829-product-v2"></script>
+</body>
+</html>

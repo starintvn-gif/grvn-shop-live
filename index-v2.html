@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-YELS41H4KZ"></script>
+  <script>window.dataLayer = window.dataLayer || []; function gtag() { dataLayer.push(arguments) } gtag('js', new Date()); gtag('config', 'G-YELS41H4KZ');</script>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>GRVN | 14일 한정 숏폼 콘텐츠커머스</title>
+  <meta name="description" content="크리에이터가 큐레이션한 2–3개 제품을 숏폼으로 보고 14일 동안 구매하는 GRVN 콘텐츠커머스.">
+  <link rel="canonical" href="https://www.grvn.shop/">
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="GRVN">
+  <meta property="og:title" content="GRVN | WATCH. DISCOVER. SHOP.">
+  <meta property="og:description" content="한 명의 크리에이터, 2–3개의 선택, 14일 한정 판매.">
+  <meta property="og:url" content="https://www.grvn.shop/">
+  <meta property="og:image" content="https://www.grvn.shop/assets/grvn-shop-og-1200x630.jpg">
+  <link rel="stylesheet" href="/home-v2.css?v=20260829-v1">
+</head>
+
+<body>
+  <a class="skip-link" href="#liveCampaigns">진행 중인 캠페인으로 이동</a>
+
+  <div class="announcement">GRVN GRAND OPEN · 2026.09.28 MON · 신규 회원 첫 구매 혜택</div>
+  <header class="site-header">
+    <a class="wordmark" href="./" aria-label="GRVN 홈">GRVN</a>
+    <nav class="main-nav" aria-label="카테고리 필터">
+      <button type="button" data-category="all" aria-pressed="true">NEW</button>
+      <button type="button" data-category="fashion" aria-pressed="false">FASHION</button>
+      <button type="button" data-category="beauty" aria-pressed="false">BEAUTY</button>
+      <button type="button" data-category="lifestyle" aria-pressed="false">LIFESTYLE</button>
+      <a href="#liveCampaigns">SHORT-FORM</a>
+      <a class="creator-join-nav" href="./influencer-dashboard.html">CREATOR JOIN</a>
+    </nav>
+    <div></div>
+  </header>
+
+  <main>
+    <section class="hero" aria-labelledby="heroTitle">
+      <div class="hero-copy">
+        <p class="kicker">VIDEO-FIRST CONTENT COMMERCE</p>
+        <h1 id="heroTitle">WATCH.<br>DISCOVER.<br>SHOP.</h1>
+        <p>콘텐츠를 보는 순간, 쇼핑이 시작됩니다.</p>
+        <div class="hero-actions">
+          <a class="button button-dark" href="#liveCampaigns">숏폼 보기</a>
+          <button class="button button-light" id="heroProductButton" type="button">상품 보기</button>
+        </div>
+      </div>
+      <div class="hero-visual" id="heroVisual" aria-label="인플루언서 스틸컷 롤링 이미지">
+        <a class="hero-slides" id="heroSlides" href="./influencer-dashboard.html"
+          aria-label="인플루언서 회원가입 및 대시보드로 이동"></a>
+        <a class="hero-dashboard-link" href="./influencer-dashboard.html"><b>CREATOR JOIN</b><span>인플루언서 회원가입 ·
+            대시보드</span></a>
+        <div class="hero-slide-meta"><span id="heroCreatorName">GRVN CREATOR</span><b id="heroSlideCount">01 / 06</b>
+        </div>
+        <button class="hero-arrow hero-prev" type="button" data-hero-direction="-1" aria-label="이전 이미지">‹</button>
+        <button class="hero-arrow hero-next" type="button" data-hero-direction="1" aria-label="다음 이미지">›</button>
+        <div class="hero-dots" id="heroDots" aria-label="스틸컷 선택"></div>
+      </div>
+    </section>
+
+    <section class="category-strip category-strip-three" aria-label="카테고리">
+      <button type="button" data-category="fashion"><b>FASHION</b><span>새로운 스타일</span></button>
+      <button type="button" data-category="beauty"><b>BEAUTY</b><span>나를 위한 루틴</span></button>
+      <button type="button" data-category="lifestyle"><b>LIFESTYLE</b><span>취향이 머무는 시간</span></button>
+    </section>
+
+    <section class="live-section" id="liveCampaigns" aria-labelledby="liveTitle">
+      <div class="section-heading">
+        <div>
+          <p class="kicker">CURATED SHORT-FORM COMMERCE</p>
+          <h2 id="liveTitle">NOW LIVE · 14 DAYS ONLY</h2>
+          <p>크리에이터가 직접 큐레이션한 2–3개의 제품을 숏폼으로 만나보세요.</p>
+        </div>
+        <div class="filter-chips" aria-label="캠페인 필터">
+          <button type="button" data-category="all" aria-pressed="true">전체</button>
+          <button type="button" data-category="fashion" aria-pressed="false">패션</button>
+          <button type="button" data-category="beauty" aria-pressed="false">뷰티</button>
+          <button type="button" data-category="lifestyle" aria-pressed="false">라이프스타일</button>
+        </div>
+      </div>
+      <div class="campaign-grid" id="campaignGrid" aria-live="polite"></div>
+      <div class="empty-state" id="emptyState" hidden>
+        <strong>현재 진행 중인 캠페인이 없습니다.</strong>
+        <span>새로운 14일 한정 에디트를 준비하고 있습니다.</span>
+      </div>
+    </section>
+
+    <section class="feature-grid" id="featureGrid" hidden aria-label="기획전 및 크리에이터 에디트">
+      <article class="featured-campaign" aria-labelledby="featuredTitle">
+        <p class="kicker">FEATURED CAMPAIGN</p>
+        <h2 id="featuredTitle">이번 주 메인 에디트</h2>
+        <div class="featured-media" id="featuredMedia"><span class="mini-play">▶</span></div>
+        <div class="featured-info">
+          <div><b id="featuredCreator"></b><span id="featuredDeadline"></span></div>
+          <h3 id="featuredProductName"></h3>
+          <p id="featuredProductDesc"></p>
+          <strong id="featuredProductPrice"></strong>
+        </div>
+        <button class="button button-dark" id="featuredButton" type="button">메인제품 숏폼 보기</button>
+      </article>
+      <div class="creator-edit" id="creatorEdit" aria-labelledby="creatorTitle">
+        <div class="creator-copy">
+          <p class="kicker">CREATOR'S EDIT</p>
+          <h2 id="creatorTitle">취향을 발견하는 새로운 방식</h2>
+          <div class="creator-meta"><b id="creatorName"></b><span id="creatorDeadline"></span></div>
+          <p>한 명의 크리에이터, 세 가지 선택.</p>
+          <div class="creator-products" id="creatorProducts"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="trust-strip" aria-label="쇼핑 안내">
+      <div><b>◇</b><strong>100% 정품</strong><span>정품만을 취급합니다</span></div>
+      <div><b>▱</b><strong>안전한 배송</strong><span>빠르고 안전하게 배송</span></div>
+      <div><b>↻</b><strong>간편한 교환·환불</strong><span>수령 후 7일 이내</span></div>
+      <div><b>◉</b><strong>고객지원</strong><span>문의는 빠르게 해결</span></div>
+    </section>
+  </main>
+
+  <footer class="site-footer" aria-label="사업자 정보 및 약관 안내">
+    <div class="footer-inner">
+      <strong>De Platform GRVN</strong>
+      <div class="footer-policy">
+        <a href="/terms.html">이용약관</a><a href="/privacy.html">개인정보처리방침</a><a href="/refund.html">교환·반품·환불정책</a>
+      </div>
+      <div class="footer-info-grid">
+        <div class="footer-info-item"><span class="footer-icon" aria-hidden="true">◇</span>
+          <p><b>COMPANY</b><span>디 플랫폼 그루븐(De Platform GRVN)</span><span>대표자 정연희</span></p>
+        </div>
+        <div class="footer-info-item"><span class="footer-icon" aria-hidden="true">▤</span>
+          <p><b>BUSINESS</b><span>사업자등록번호 890-09-03422</span><span>통신판매업신고 제2026-서울성북-0991호</span></p>
+        </div>
+        <div class="footer-info-item"><span class="footer-icon" aria-hidden="true">⌖</span>
+          <p><b>ADDRESS</b><span>서울특별시 성북구</span><span>삼양로9길 13-7</span></p>
+        </div>
+        <div class="footer-info-item"><span class="footer-icon" aria-hidden="true">◉</span>
+          <p><b>CONTACT</b><a href="tel:050714752010">0507-1475-2010</a><a
+              href="mailto:grvn.shop1004@gmail.com">grvn.shop1004@gmail.com</a></p>
+        </div>
+      </div>
+      <div class="footer-social-icons" aria-label="GRVN 공식 채널">
+        <a href="https://www.instagram.com/grvn.official" target="_blank" rel="noopener noreferrer"
+          aria-label="GRVN 인스타그램" title="Instagram"><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M7.8 2h8.4C19.4 2 22 4.6 22 7.8v8.4c0 3.2-2.6 5.8-5.8 5.8H7.8C4.6 22 2 19.4 2 16.2V7.8C2 4.6 4.6 2 7.8 2Zm0 2C5.7 4 4 5.7 4 7.8v8.4C4 18.3 5.7 20 7.8 20h8.4c2.1 0 3.8-1.7 3.8-3.8V7.8C20 5.7 18.3 4 16.2 4H7.8Zm8.9 2.2a1.1 1.1 0 1 1 0 2.2 1.1 1.1 0 0 1 0-2.2ZM12 7.1a4.9 4.9 0 1 1 0 9.8 4.9 4.9 0 0 1 0-9.8Zm0 2a2.9 2.9 0 1 0 0 5.8 2.9 2.9 0 0 0 0-5.8Z" />
+          </svg></a>
+        <a href="https://www.youtube.com/channel/UCXyoyPy-1ROTga2yTc_uhGA" target="_blank" rel="noopener noreferrer"
+          aria-label="GRVN 유튜브" title="YouTube"><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M21.6 7.1s-.2-1.5-.8-2.1c-.8-.8-1.7-.8-2.1-.9C15.8 3.9 12 3.9 12 3.9s-3.8 0-6.7.2c-.4.1-1.3.1-2.1.9-.6.6-.8 2.1-.8 2.1S2 8.9 2 10.7v1.7c0 1.8.2 3.6.2 3.6s.2 1.5.8 2.1c.8.8 1.8.8 2.3.9 1.7.2 6.7.2 6.7.2s3.8 0 6.7-.2c.4-.1 1.3-.1 2.1-.9.6-.6.8-2.1.8-2.1s.2-1.8.2-3.6v-1.7c0-1.8-.2-3.6-.2-3.6ZM10 14.8V8.7l5.7 3.1-5.7 3Z" />
+          </svg></a>
+        <a href="https://www.grvn.co.kr" target="_blank" rel="noopener noreferrer" aria-label="GRVN 공식 홈페이지"
+          title="GRVN Homepage"><svg viewBox="0 0 24 24" aria-hidden="true">
+            <path
+              d="M12 2.2 2.8 10.1l1.3 1.5 1.4-1.2V21h5.2v-6.2h2.6V21h5.2V10.4l1.4 1.2 1.3-1.5L12 2.2Zm4.5 16.8h-1.2v-6.2H8.7V19H7.5V8.7L12 4.9l4.5 3.8V19Z" />
+          </svg></a>
+      </div>
+      <p>© De Platform GRVN. All rights reserved.</p>
+    </div>
+  </footer>
+
+  <div id="grandOpenPopup" class="grand-open-popup" aria-hidden="true">
+    <div class="grand-open-backdrop" data-popup-close></div>
+    <div class="grand-open-box" role="dialog" aria-modal="true" aria-labelledby="grandOpenTitle">
+      <button id="grandOpenClose" class="grand-open-close" type="button" aria-label="팝업 닫기">×</button>
+      <p class="grand-open-label">GRVN OFFICIAL LAUNCH</p>
+      <h2 id="grandOpenTitle">2026. 09.28 MON<br>GRAND OPEN</h2>
+      <p>숏폼 콘텐츠와 한정 큐레이션이 만나는<br>새로운 콘텐츠커머스가 시작됩니다.</p>
+      <a href="#liveCampaigns" class="grand-open-button" data-popup-close>먼저 둘러보기</a>
+      <label><input id="grandOpenTodayClose" type="checkbox"> 오늘 하루 보지 않기</label>
+    </div>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script>window.GRVN_API_BASE = "https://api.grvn.shop";</script>
+  <script src="/data.js?v=20260829-home-v2"></script>
+  <script src="/home-v2.js?v=20260829-v1"></script>
+</body>
+
+</html>
