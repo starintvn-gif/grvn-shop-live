@@ -259,6 +259,10 @@
 }
 
 @media(max-width:620px) {
+  .product-editorial-theme {
+    overflow-x: hidden
+  }
+
   .product-editorial-theme .landing-wrap {
     padding: 12px 12px 48px
   }
@@ -318,5 +322,21 @@
     position: relative;
     bottom: auto;
     padding: 14px
+  }
+
+  .product-editorial-theme>.grvn-footer {
+    position: relative;
+    left: 50%;
+    width: 100vw;
+    max-width: none;
+    margin-left: -50vw;
+    margin-right: -50vw;
+    box-sizing: border-box;
+  }
+
+  .product-editorial-theme>.grvn-footer .footer-inner {
+    width: 100%;
+    max-width: none;
+    box-sizing: border-box;
   }
 }
