@@ -15,7 +15,7 @@
   <meta http-equiv="Content-Type" content="text/html; charset=UTF-8">
 
   <meta name="viewport" content="width=device-width, initial-scale=1">
-  <title>GRVN | 숏폼 콘텐츠커머스 & 어필리에이트 플랫폼</title>
+  <title>GRVN | 14일 한정 숏폼 커머스 DROP</title>
   <meta name="description"
     content="브랜드 제품, 숏폼 콘텐츠, 인플루언서 DB, 어필리에이트 링크, 자사몰 결제, 전환 트래킹, 정산·성과 데이터가 하나로 연결된 콘텐츠커머스 플랫폼.">
 
@@ -40,10 +40,11 @@
   <meta name="twitter:description"
     content="브랜드 제품, 숏폼 콘텐츠, 인플루언서 DB, 어필리에이트 링크, 자사몰 결제, 전환 트래킹, 정산·성과 데이터가 하나로 연결된 콘텐츠커머스 플랫폼.">
   <meta name="twitter:image" content="https://www.grvn.shop/assets/grvn-shop-og-1200x630.jpg">
-  <link rel="stylesheet" href="/styles.css?v=20260908-card-contrast-v3" />
+  <link rel="stylesheet" href="./styles.css?v=20260908-card-contrast-v3" />
+  <link rel="stylesheet" href="./grvn-home.css?v=20260908-drop-v3" />
 </head>
 
-<body class="home-light-theme">
+<body class="home-light-theme home-drop-theme">
   <a class="skip-link" href="#main">본문
     바로가기</a>
   <header class="topbar">
@@ -75,14 +76,21 @@
     </section>
 
     <section id="shop" class="shop-section" aria-labelledby="shop-title">
-      <p class="eyebrow">SHOP BY SHORT-FORM</p>
-      <div class="section-head">
-        <h2 id="shop-title">인플루언서별 숏폼 피드</h2>
+      <div class="drop-intro">
+        <div>
+          <p class="eyebrow">GRVN CURATED DROP</p>
+          <h2 id="shop-title">숏폼으로 발견하는 14일 한정 셀렉션</h2>
+          <p>크리에이터의 실제 콘텐츠와 엄선한 상품을 가장 좋은 혜택으로 만나보세요.</p>
+        </div>
+        <strong class="drop-rule">2 PRODUCTS · 14 DAYS · ONE DROP</strong>
+      </div>
+      <div class="section-head legacy-filter">
+        <h2>기존 필터</h2>
         <label class="search-label">인플루언서, 상품명, 상품군 검색
           <input id="search" type="search" placeholder="예: 이우정, 원피스, 블라우스" autocomplete="off">
         </label>
       </div>
-      <div class="filter-block">
+      <div class="filter-block legacy-filter">
         <p class="filter-label">인플루언서별 영상</p>
         <div id="influencerTabs" class="tabs" role="tablist" aria-label="인플루언서 영상 필터"><button class="tab" type="button"
             data-filter-kind="influencer" data-value="all" aria-selected="true">전체</button><button class="tab"
@@ -92,7 +100,7 @@
             data-value="김보경" aria-selected="false">김보경</button><button class="tab" type="button"
             data-filter-kind="influencer" data-value="송지은" aria-selected="false">송지은</button></div>
       </div>
-      <div class="filter-block">
+      <div class="filter-block legacy-filter">
         <p class="filter-label">영상 속 상품군</p>
         <div id="typeTabs" class="tabs" role="tablist" aria-label="상품군 필터"><button class="tab small-tab" type="button"
             data-filter-kind="type" data-value="all" aria-selected="true">전체</button><button class="tab small-tab"
@@ -105,7 +113,23 @@
             class="tab small-tab" type="button" data-filter-kind="type" data-value="아우터"
             aria-selected="false">아우터</button></div>
       </div>
+      <div class="commerce-categories" aria-label="기획전 상품군">
+        <button class="commerce-category" type="button" data-drop-category="fashion" aria-pressed="false"><small>01 /
+            STYLE</small><strong>패션</strong><span>지금 입고 싶은 큐레이션</span></button>
+        <button class="commerce-category" type="button" data-drop-category="beauty" aria-pressed="false"><small>02 /
+            BEAUTY</small><strong>뷰티</strong><span>나만의 루틴을 위한 선택</span></button>
+        <button class="commerce-category" type="button" data-drop-category="goods" aria-pressed="false"><small>03 /
+            GOODS</small><strong>잡화</strong><span>스타일을 완성하는 디테일</span></button>
+        <button class="commerce-category" type="button" data-drop-category="lifestyle" aria-pressed="false"><small>04 /
+            LIFE</small><strong>라이프스타일</strong><span>취향이 머무는 일상</span></button>
+      </div>
       <div id="feed" class="feed-grid" aria-live="polite"></div>
+    </section>
+    <section class="trust-strip-home" aria-label="쇼핑 안내">
+      <div><b>◇</b><strong>100% 정품</strong><span>검증된 상품만 소개합니다</span></div>
+      <div><b>▱</b><strong>안전한 배송</strong><span>주문부터 배송까지 안내합니다</span></div>
+      <div><b>↻</b><strong>간편한 교환·환불</strong><span>정책에 따라 빠르게 처리합니다</span></div>
+      <div><b>◉</b><strong>고객지원</strong><span>문의사항을 신속히 해결합니다</span></div>
     </section>
   </main>
   <footer class="site-footer grvn-footer" aria-label="사업자 정보 및 약관 안내">
@@ -150,8 +174,9 @@
   <script>
     window.GRVN_API_BASE = "https://api.grvn.shop";
   </script>
-  <script src="/data.js?v=20260529-video-fix"></script>
-  <script src="/shop.js?v=20260624-grandopen-popup-v1"></script>
+  <script src="./data.js?v=20260529-video-fix"></script>
+  <script src="./shop.js?v=20260624-grandopen-popup-v1"></script>
+  <script src="./grvn-home.js?v=20260908-drop-v3"></script>
 
   <!-- GRAND OPEN POPUP -->
   <div id="grandOpenPopup" class="grand-open-popup">

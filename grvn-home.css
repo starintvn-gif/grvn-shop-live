@@ -1,0 +1,287 @@
+/* GRVN 14-day DROP homepage enhancements */
+.home-drop-theme .legacy-filter {
+    display: none !important
+}
+
+.home-drop-theme .drop-intro {
+    display: grid;
+    grid-template-columns: 1fr auto;
+    gap: 30px;
+    align-items: end;
+    margin-bottom: 26px
+}
+
+.home-drop-theme .drop-intro h2 {
+    margin: 5px 0 8px;
+    color: #081b44;
+    font-size: clamp(30px, 4vw, 48px);
+    letter-spacing: -.055em
+}
+
+.home-drop-theme .drop-intro p {
+    margin: 0;
+    color: #64717d
+}
+
+.home-drop-theme .drop-rule {
+    color: #081b44;
+    font-size: 11px;
+    font-weight: 950;
+    letter-spacing: .16em;
+    text-align: right
+}
+
+.home-drop-theme .commerce-categories {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    gap: 12px;
+    margin: 0 0 34px
+}
+
+.home-drop-theme .commerce-category {
+    --cat: #19e5d1;
+    position: relative;
+    min-height: 138px;
+    overflow: hidden;
+    padding: 23px;
+    border: 1px solid #d5d9d8;
+    background: #fff;
+    color: #081b44;
+    text-align: left;
+    transition: transform .22s ease, border-color .22s ease, color .22s ease, background .22s ease, box-shadow .22s ease
+}
+
+.home-drop-theme .commerce-category::before {
+    content: '';
+    position: absolute;
+    inset: auto 0 0;
+    height: 5px;
+    background: var(--cat);
+    transition: height .22s ease
+}
+
+.home-drop-theme .commerce-category::after {
+    content: '→';
+    position: absolute;
+    right: 22px;
+    bottom: 19px;
+    font-size: 21px;
+    transition: transform .22s ease
+}
+
+.home-drop-theme .commerce-category:hover,
+.home-drop-theme .commerce-category:focus-visible,
+.home-drop-theme .commerce-category[aria-pressed=true] {
+    transform: translateY(-4px);
+    border-color: var(--cat);
+    background: var(--cat);
+    color: #07162f;
+    box-shadow: 0 18px 38px rgba(8, 27, 68, .13);
+    outline: none
+}
+
+.home-drop-theme .commerce-category:hover::before,
+.home-drop-theme .commerce-category[aria-pressed=true]::before {
+    height: 100%;
+    opacity: .12
+}
+
+.home-drop-theme .commerce-category:hover::after,
+.home-drop-theme .commerce-category[aria-pressed=true]::after {
+    transform: translateX(4px)
+}
+
+.home-drop-theme .commerce-category[data-drop-category=fashion] {
+    --cat: #19e5d1
+}
+
+.home-drop-theme .commerce-category[data-drop-category=beauty] {
+    --cat: #e7a9c8
+}
+
+.home-drop-theme .commerce-category[data-drop-category=goods] {
+    --cat: #f1c75b
+}
+
+.home-drop-theme .commerce-category[data-drop-category=lifestyle] {
+    --cat: #a9c7a3
+}
+
+.home-drop-theme .commerce-category small,
+.home-drop-theme .commerce-category strong,
+.home-drop-theme .commerce-category span {
+    position: relative;
+    z-index: 1;
+    display: block
+}
+
+.home-drop-theme .commerce-category small {
+    font-size: 9px;
+    font-weight: 900;
+    letter-spacing: .16em
+}
+
+.home-drop-theme .commerce-category strong {
+    margin: 19px 0 4px;
+    font-size: 22px
+}
+
+.home-drop-theme .commerce-category span {
+    font-size: 12px;
+    opacity: .7
+}
+
+.home-drop-theme .video-box .drop-identity {
+    position: absolute;
+    left: 12px;
+    top: 12px;
+    right: 12px;
+    z-index: 8;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    gap: 8px;
+    pointer-events: none
+}
+
+.home-drop-theme .video-box .drop-instagram,
+.home-drop-theme .video-box .drop-period {
+    display: inline-flex;
+    align-items: center;
+    min-height: 31px;
+    padding: 7px 10px;
+    border: 1px solid rgba(255, 255, 255, .34);
+    border-radius: 999px;
+    background: rgba(5, 18, 43, .84);
+    color: #fff;
+    font-size: 11px;
+    font-weight: 900;
+    line-height: 1;
+    backdrop-filter: blur(12px);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, .2)
+}
+
+.home-drop-theme .video-box .drop-instagram {
+    gap: 5px;
+    max-width: 56%;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    pointer-events: auto;
+    text-decoration: none
+}
+
+.home-drop-theme .video-box .drop-instagram:hover,
+.home-drop-theme .video-box .drop-instagram:focus-visible {
+    border-color: #19e5d1;
+    background: #fff;
+    color: #081b44;
+    outline: 2px solid #19e5d1;
+    outline-offset: 2px
+}
+
+.home-drop-theme .video-box .drop-period {
+    border-color: #19e5d1;
+    background: #19e5d1;
+    color: #07162f;
+    letter-spacing: .02em
+}
+
+.home-drop-theme .video-box>.clip-badge {
+    display: none !important
+}
+
+.home-drop-theme .look-product-list>.look-product:nth-child(n+3) {
+    display: none !important
+}
+
+.home-drop-theme .look-product-list {
+    grid-template-columns: repeat(2, minmax(0, 1fr)) !important
+}
+
+.home-drop-theme .trust-strip-home {
+    max-width: 1220px;
+    margin: 50px auto 0;
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    border: 1px solid #d5d9d8;
+    background: #e9eceb
+}
+
+.home-drop-theme .trust-strip-home div {
+    display: grid;
+    place-items: center;
+    gap: 5px;
+    min-height: 128px;
+    padding: 20px;
+    border-right: 1px solid #d5d9d8;
+    text-align: center
+}
+
+.home-drop-theme .trust-strip-home div:last-child {
+    border-right: 0
+}
+
+.home-drop-theme .trust-strip-home b {
+    color: #081b44;
+    font-size: 24px;
+    font-weight: 500
+}
+
+.home-drop-theme .trust-strip-home strong {
+    color: #081b44;
+    font-size: 13px
+}
+
+.home-drop-theme .trust-strip-home span {
+    color: #64717d;
+    font-size: 11px
+}
+
+@media(max-width:780px) {
+    .home-drop-theme .drop-intro {
+        grid-template-columns: 1fr
+    }
+
+    .home-drop-theme .drop-rule {
+        text-align: left
+    }
+
+    .home-drop-theme .commerce-categories {
+        grid-template-columns: repeat(2, 1fr)
+    }
+
+    .home-drop-theme .trust-strip-home {
+        grid-template-columns: repeat(2, 1fr)
+    }
+
+    .home-drop-theme .trust-strip-home div:nth-child(2) {
+        border-right: 0
+    }
+
+    .home-drop-theme .trust-strip-home div:nth-child(-n+2) {
+        border-bottom: 1px solid #d5d9d8
+    }
+}
+
+@media(max-width:460px) {
+    .home-drop-theme .commerce-categories {
+        grid-template-columns: 1fr
+    }
+
+    .home-drop-theme .commerce-category {
+        min-height: 112px
+    }
+
+    .home-drop-theme .video-box .drop-identity {
+        left: 8px;
+        right: 8px;
+        top: 8px
+    }
+
+    .home-drop-theme .video-box .drop-instagram,
+    .home-drop-theme .video-box .drop-period {
+        padding: 6px 8px;
+        font-size: 9px
+    }
+}
