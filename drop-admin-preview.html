@@ -1,0 +1,142 @@
+<!doctype html>
+<html lang="ko">
+
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>GRVN · 14 DAY DROP 관리자 미리보기</title>
+  <link rel="stylesheet" href="./drop-admin-preview.css?v=2">
+</head>
+
+<body>
+  <header class="topbar"><a class="brand" href="#">GRVN</a>
+    <div><span class="preview-badge">SAFE PREVIEW</span><button type="button" id="resetButton" class="ghost">새
+        DROP</button></div>
+  </header>
+  <main class="shell">
+    <section class="intro">
+      <div>
+        <p class="eyebrow">GRVN DROP OPERATIONS</p>
+        <h1>14일 DROP을<br>한 번에 등록하세요.</h1>
+        <p>인플루언서·숏폼·상품 2개만 정리하면 공개 준비 상태까지 자동으로 구성됩니다.</p>
+      </div>
+      <aside class="status-card"><span>현재 상태</span><strong id="overallStatus">임시 초안</strong><small>실제 DB와 사이트에는 저장되지
+          않습니다.</small></aside>
+    </section>
+
+    <nav class="steps" aria-label="등록 단계">
+      <button type="button" data-step-button="1" aria-current="step"><b>01</b><span>기획전</span></button>
+      <button type="button" data-step-button="2"><b>02</b><span>크리에이터</span></button>
+      <button type="button" data-step-button="3"><b>03</b><span>숏폼</span></button>
+      <button type="button" data-step-button="4"><b>04</b><span>상품 2개</span></button>
+      <button type="button" data-step-button="5"><b>05</b><span>검수·예약</span></button>
+    </nav>
+
+    <form id="dropForm" novalidate>
+      <section class="step-panel" data-step="1">
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">01 / CAMPAIGN</p>
+            <h2>기획전 기본 설정</h2>
+          </div><span>종료일 자동 계산</span>
+        </div>
+        <div class="form-grid">
+          <label>DROP 기획전명 *<input id="campaignName" required placeholder="예: SEPTEMBER FASHION DROP"></label>
+          <label>상품군 *<select id="category" required>
+              <option value="">선택</option>
+              <option>패션</option>
+              <option>뷰티</option>
+              <option>잡화</option>
+              <option>라이프스타일</option>
+            </select></label>
+          <label>시작일 *<input id="startDate" required type="date"></label>
+          <label>종료일 <input id="endDate" type="date" readonly></label>
+        </div>
+        <div class="date-result"><strong>14 DAYS ONLY</strong><span id="dateSummary">시작일을 선택하면 종료일이 자동 설정됩니다.</span>
+        </div>
+      </section>
+
+      <section class="step-panel" data-step="2" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">02 / CREATOR</p>
+            <h2>크리에이터 연결</h2>
+          </div><span>영상 배지 자동 생성</span>
+        </div>
+        <div class="form-grid">
+          <label>인플루언서 이름 *<input id="creatorName" required placeholder="예: 이우정"></label>
+          <label>인스타그램 아이디 *<input id="instagram" required placeholder="예: @creator"></label>
+          <label class="wide">인스타그램 URL *<input id="instagramUrl" required type="url"
+              placeholder="https://www.instagram.com/creator/"></label>
+          <label>어필리에이트 코드 *<input id="affiliateCode" required placeholder="예: WOOJUNG01"></label>
+          <label>표시 문구<input id="creatorCaption" placeholder="예: 이우정의 가을 셀렉션"></label>
+        </div>
+      </section>
+
+      <section class="step-panel" data-step="3" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">03 / SHORT-FORM</p>
+            <h2>원소스 영상 등록</h2>
+          </div><span>업로드·스크립트 자동화 예정</span>
+        </div>
+        <div class="media-grid">
+          <label class="upload-zone"><input id="videoFile" type="file" accept="video/mp4,video/webm"><b>숏폼 영상
+              선택</b><span>MP4 · 세로 9:16 권장</span></label>
+          <div class="video-preview"><video id="videoPreview" controls muted playsinline></video>
+            <div class="video-overlay"><span id="instagramPreview">@INSTAGRAM</span><strong>14 DAYS ONLY</strong></div>
+          </div>
+        </div>
+        <div class="script-box">
+          <div>
+            <h3>영상 음성 스크립트</h3><button type="button" id="scriptDemoButton" class="ghost">자동 생성 시연</button>
+          </div><textarea id="transcript" rows="6"
+            placeholder="실제 연결 단계에서는 영상 음성이 자동으로 텍스트화되며, 관리자 검수 후 상세페이지에 반영됩니다."></textarea>
+        </div>
+        <label class="full-label">해시태그<input id="hashtags" placeholder="#GRVN #14DAYDROP #패션 #데일리룩"></label>
+      </section>
+
+      <section class="step-panel" data-step="4" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">04 / TWO PRODUCTS</p>
+            <h2>영상 속 상품 2개 연결</h2>
+          </div><span id="productCounter">0 / 2 선택</span>
+        </div>
+        <p class="help">현재 상품은 미리보기 예시입니다. 실제 연결 시 Supabase 상품을 검색해 선택합니다.</p>
+        <div id="productPicker" class="product-picker"></div>
+        <div class="selected-products">
+          <h3>선택된 DROP 상품</h3>
+          <div id="selectedProducts" class="selected-grid"></div>
+        </div>
+      </section>
+
+      <section class="step-panel" data-step="5" hidden>
+        <div class="panel-heading">
+          <div>
+            <p class="eyebrow">05 / REVIEW</p>
+            <h2>공개 전 자동 점검</h2>
+          </div><span>결제·DB 미연결 미리보기</span>
+        </div>
+        <div class="review-layout">
+          <div>
+            <h3>필수 항목</h3>
+            <ul id="validationList" class="validation-list"></ul>
+          </div>
+          <aside class="publish-card">
+            <p>공개 기간</p><strong id="reviewDates">미설정</strong>
+            <p>연결 상품</p><strong id="reviewProducts">0개</strong><button type="button" id="publishButton" disabled>14일
+              DROP 예약</button><small>미리보기에서는 실제 예약되지 않습니다.</small>
+          </aside>
+        </div>
+      </section>
+
+      <footer class="form-nav"><button type="button" id="prevButton" class="ghost" disabled>이전</button><span
+          id="stepText">1 / 5</span><button type="button" id="nextButton" class="primary">다음 단계</button></footer>
+    </form>
+  </main>
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script src="./drop-admin-preview.js?v=2"></script>
+</body>
+
+</html>
