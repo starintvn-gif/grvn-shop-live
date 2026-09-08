@@ -43,3 +43,52 @@ main{background:var(--card)}
 @media(max-width:950px){.site-header{grid-template-columns:1fr auto}.site-header>div:last-child{display:none}.main-nav{gap:14px}.footer-info-grid{grid-template-columns:1fr 1fr}.footer-info-item:nth-child(2){border-right:0}.footer-info-item:nth-child(-n+2){border-bottom:1px solid rgba(255,255,255,.13)}}
 @media(max-width:620px){.hero-actions{margin-left:auto;margin-right:auto}.hero-dashboard-link{right:12px;top:12px}.footer-info-grid{grid-template-columns:1fr}.footer-info-item{border-right:0;border-bottom:1px solid rgba(255,255,255,.13);padding:8px 6px}.footer-info-item:last-child{border-bottom:0}}
 .footer-social-icons{display:flex;justify-content:center;align-items:center;gap:10px;width:max-content;margin:8px auto 0;padding:7px 16px 0;border-top:1px solid rgba(255,255,255,.15)}.footer-social-icons a{display:grid;place-items:center;width:28px;height:28px;border:1px solid rgba(255,255,255,.24);border-radius:50%;color:#ddd;transition:.2s}.footer-social-icons a:hover{background:#fff;color:#111;border-color:#fff}.footer-social-icons svg{width:14px;height:14px;fill:currentColor}
+.admin-nav{font-size:11px;letter-spacing:.08em;padding:8px 10px;border:1px solid #181818;border-radius:999px}
+
+/* 2026-09-08 GRVN Identity / Two-product Drop */
+:root{--grvn-navy:#081b44;--grvn-black:#0a0a0f;--grvn-white:#f2f2f0;--grvn-jade:#19e5d1;--grvn-violet:#a43cff;--paper:var(--grvn-white);--soft:#e9eceb;--line:#d5d9d8;--accent:var(--grvn-violet)}
+body{background:var(--grvn-white)}
+.announcement{background:var(--grvn-black);border-bottom:1px solid rgba(25,229,209,.55);color:var(--grvn-white)}
+.site-header{background:rgba(242,242,240,.96);border-bottom-color:#d8dddb}
+.wordmark{position:relative;color:var(--grvn-navy)}
+.wordmark::after{content:'';position:absolute;left:0;right:0;bottom:-5px;height:2px;background:linear-gradient(90deg,var(--grvn-jade) 0 72%,var(--grvn-violet) 72%)}
+.main-nav [aria-pressed=true]{border-bottom-color:var(--grvn-jade)}
+.creator-join-nav{color:var(--grvn-violet)}
+.admin-nav{border-color:var(--grvn-navy);color:var(--grvn-navy)}
+.hero{background:var(--grvn-navy)}
+.hero-copy{color:var(--grvn-white)}
+.hero-copy .kicker{color:var(--grvn-jade)}
+.hero-actions .button-dark{border-color:var(--grvn-jade);background:var(--grvn-jade);color:var(--grvn-navy)}
+.hero-actions .button-light{border-color:rgba(242,242,240,.65);color:var(--grvn-white)}
+.category-strip button{position:relative;overflow:hidden;background:var(--grvn-black);border:1px solid rgba(25,229,209,.2)}
+.category-strip button::after{content:'';position:absolute;left:24px;right:24px;bottom:0;height:2px;background:linear-gradient(90deg,var(--grvn-jade),var(--grvn-violet));transform:scaleX(0);transform-origin:left;transition:.25s}
+.category-strip button:hover::after{transform:scaleX(1)}
+.live-section .kicker{color:#087f75}
+.section-heading h2{color:var(--grvn-navy);font-size:clamp(30px,3vw,46px)}
+.filter-chips [aria-pressed=true]{background:var(--grvn-navy);border-color:var(--grvn-navy)}
+.campaign-card{border-color:#cbd3d1;box-shadow:0 14px 38px rgba(8,27,68,.07)}
+.campaign-products{grid-template-columns:repeat(2,minmax(0,1fr));min-height:300px}
+.campaign-product:nth-child(2){border-right:0}
+.campaign-product .product-copy em{background:var(--grvn-navy);transition:.2s}
+.campaign-product:hover .product-copy em{background:linear-gradient(90deg,var(--grvn-navy),#142c5b);color:var(--grvn-jade)}
+.limited-label{background:var(--grvn-navy);color:var(--grvn-jade);letter-spacing:.05em}
+.deadline{color:var(--grvn-jade)}
+.creator-products{grid-template-columns:repeat(2,minmax(0,1fr))}
+
+.grvn-footer{position:relative;overflow:hidden;margin-top:0;padding:0;background:radial-gradient(circle at 78% 0,rgba(25,229,209,.11),transparent 30%),linear-gradient(135deg,#050a18,var(--grvn-navy) 58%,#070712);color:#aebac6}
+.grvn-footer::before{content:'';position:absolute;left:0;right:0;top:0;height:1px;background:linear-gradient(90deg,transparent,var(--grvn-jade),var(--grvn-violet),transparent)}
+.grvn-footer .footer-inner{max-width:1200px;padding:28px 28px 20px;text-align:left}
+.footer-brand-row{display:grid;grid-template-columns:auto 1fr auto;align-items:center;gap:16px;padding-bottom:20px;border-bottom:1px solid rgba(242,242,240,.13)}
+.footer-emblem{position:relative;width:42px;height:42px;border:1px solid var(--grvn-jade);border-radius:50%}
+.footer-emblem::after{content:'';position:absolute;left:0;right:0;top:50%;height:1px;background:var(--grvn-jade)}
+.footer-brand-copy{display:grid;gap:3px}.footer-brand-copy strong{color:var(--grvn-white);font-size:18px;font-weight:500}.footer-brand-copy strong b{color:var(--grvn-jade);letter-spacing:.08em}.footer-brand-copy span{font-size:9px;letter-spacing:.2em;color:#8fa5b6}
+.footer-drop-message{color:var(--grvn-jade);font-size:10px;font-weight:800;letter-spacing:.18em}
+.footer-content-row{display:grid;grid-template-columns:1.35fr 1fr .8fr;gap:28px;align-items:start;padding:18px 0 10px}
+.footer-company,.footer-contact{display:grid;gap:3px}.footer-company b{color:var(--grvn-white);font-size:10px}.footer-company span,.footer-contact a{font-size:9px;color:#9cabb8}
+.grvn-footer .footer-policy{display:flex;justify-content:flex-start;gap:7px 15px;margin:0}.grvn-footer .footer-policy a{color:#c8d1d8;font-size:9px}.grvn-footer .footer-policy a:hover,.footer-contact a:hover{color:var(--grvn-jade)}
+.footer-contact{text-align:right}
+.grvn-footer .footer-social-icons{justify-content:flex-start;margin:4px 0 0;padding:8px 0 0;border-top-color:rgba(242,242,240,.11)}
+.grvn-footer .footer-social-icons a{border-color:rgba(25,229,209,.35);color:#b9c7d2}.grvn-footer .footer-social-icons a:hover{background:var(--grvn-jade);border-color:var(--grvn-jade);color:var(--grvn-navy)}
+.footer-copyright{margin:8px 0 0!important;color:#667789!important;font-size:8px!important;letter-spacing:.04em}
+@media(max-width:760px){.campaign-products{grid-template-columns:repeat(2,minmax(0,1fr));min-height:0}.footer-brand-row{grid-template-columns:auto 1fr}.footer-drop-message{grid-column:1/-1}.footer-content-row{grid-template-columns:1fr;gap:14px}.footer-contact{text-align:left}.grvn-footer .footer-inner{padding:25px 18px 18px}}
+@media(max-width:420px){.campaign-products{grid-template-columns:1fr}.campaign-product{border-right:0;border-bottom:1px solid var(--line)}.campaign-product:last-child{border-bottom:0}}

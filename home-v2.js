@@ -10,7 +10,7 @@ const CAMPAIGN_DEFAULTS = {
   startAt: '2026-09-28T00:00:00+09:00',
   endAt: '2026-10-11T23:59:59+09:00',
   maxCampaigns: 4,
-  maxProducts: 3
+  maxProducts: 2
 };
 
 const CAMPAIGN_OVERRIDES = {
@@ -94,15 +94,18 @@ function groupCampaigns() {
     .filter(product => product && product.status !== 'inactive' && (product.video || product.defaultClip))
     .forEach(product => {
       const clipId = product.defaultClip || product.video || product.id;
-      if (!map.has(clipId)) {
+      const influencer = product.defaultInfluencer || 'GRVN Creator';
+      const campaignName = product.campaign || 'grvn_shortform_commerce';
+      const campaignKey = `${influencer}::${campaignName}`;
+      if (!map.has(campaignKey)) {
         const override = CAMPAIGN_OVERRIDES[clipId] || {};
-        map.set(clipId, {
+        map.set(campaignKey, {
           id: clipId,
-          influencer: product.defaultInfluencer || 'GRVN Creator',
+          influencer,
           category: normalizeCategory(product.category),
           video: product.video || '',
           affiliate: product.defaultAffiliate || affiliateCode,
-          campaign: product.campaign || 'grvn_shortform_commerce',
+          campaign: campaignName,
           startAt: override.startAt || product.startAt || product.start_at || CAMPAIGN_DEFAULTS.startAt,
           endAt: override.endAt || product.endAt || product.end_at || CAMPAIGN_DEFAULTS.endAt,
           instagram: override.instagram || product.instagram || `@${product.defaultInfluencer || 'grvn.official'}`,
@@ -110,10 +113,13 @@ function groupCampaigns() {
           products: []
         });
       }
-      const row = map.get(clipId);
+      const row = map.get(campaignKey);
       if (row.products.length < CAMPAIGN_DEFAULTS.maxProducts) row.products.push(product);
     });
-  return Array.from(map.values()).slice(0, CAMPAIGN_DEFAULTS.maxCampaigns);
+  // GRVN DROP은 상품이 정확히 2개 준비된 캠페인만 고객에게 공개합니다.
+  return Array.from(map.values())
+    .filter(campaign => campaign.products.length === CAMPAIGN_DEFAULTS.maxProducts)
+    .slice(0, CAMPAIGN_DEFAULTS.maxCampaigns);
 }
 
 function campaignState(campaign, now = new Date()) {

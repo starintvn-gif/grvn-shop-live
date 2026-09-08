@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>GRVN | 숏폼 제품 구매</title>
   <meta name="description" content="GRVN 숏폼에서 소개한 제품의 상세정보와 옵션을 확인하고 바로 구매하세요.">
-  <link rel="stylesheet" href="/product-v2.css?v=20260829-v1">
+  <link rel="stylesheet" href="/product-v2.css?v=20260908-options-v1">
 </head>
 <body>
   <a class="skip-link" href="#productMain">상품정보로 이동</a>
@@ -24,6 +24,7 @@
           <video id="landingVideo" autoplay muted loop playsinline controls aria-label="상품 숏폼 영상"></video>
           <span>SHORT-FORM PREVIEW</span>
         </div>
+        <div id="productHashtags" class="product-hashtags" aria-label="상품 해시태그"></div>
         <p>영상에서 확인한 제품을 우측에서 옵션 선택 후 바로 구매할 수 있습니다.</p>
       </div>
 
@@ -39,17 +40,31 @@
         </div>
         <div class="affiliate-line">Creator code <b id="affCode">GRVN</b></div>
 
-        <div class="purchase-options">
-          <label>옵션<select id="optionSelect"></select></label>
-          <label>수량<input id="qtyInput" type="number" min="1" value="1" inputmode="numeric"></label>
-        </div>
+        <section class="option-panel" aria-labelledby="optionTitle">
+          <div class="option-heading">
+            <h2 id="optionTitle">옵션 선택</h2>
+            <span><i aria-hidden="true">*</i> 필수 선택</span>
+          </div>
+          <div id="optionGroups" class="option-groups"></div>
+          <select id="optionSelect" hidden tabindex="-1" aria-hidden="true"></select>
+          <div class="option-bottom-row">
+            <label class="quantity-field">수량
+              <span class="quantity-control">
+                <button id="qtyMinus" type="button" aria-label="수량 줄이기">−</button>
+                <input id="qtyInput" type="number" min="1" value="1" inputmode="numeric" aria-label="수량">
+                <button id="qtyPlus" type="button" aria-label="수량 늘리기">+</button>
+              </span>
+            </label>
+            <p id="selectedOptionSummary" class="selected-option-summary" aria-live="polite">컬러와 사이즈를 선택해 주세요.</p>
+          </div>
+        </section>
 
         <div class="order-summary">
           <div><span>상품금액</span><b id="subtotal">₩0</b></div>
           <div><span>배송비</span><b>무료</b></div>
           <div class="total-row"><span>총 결제금액</span><b id="total">₩0</b></div>
         </div>
-        <button id="checkoutBtn" class="buy-now" type="button">바로 구매</button>
+        <button id="checkoutBtn" class="buy-now" type="button" disabled>옵션을 선택해 주세요</button>
         <p class="safe-payment">NHN KCP · PortOne V2 안전결제</p>
 
         <div id="complete" class="complete" role="status" aria-live="polite">
@@ -58,25 +73,35 @@
       </div>
     </section>
 
-    <section class="detail-layout" id="productDetail">
-      <article class="detail-image-card">
-        <p class="kicker">PRODUCT DETAIL</p>
-        <img id="detailImage" alt="상품 상세페이지 이미지">
-        <p id="detailCaption"></p>
-        <button id="openProductWebDetailBtn" type="button">브랜드 상세정보 확인</button>
-      </article>
-      <aside class="detail-copy-card">
-        <p class="kicker">PRODUCT INFORMATION</p>
-        <h2>제품 상세설명</h2>
-        <p>숏폼에서 소개된 제품의 실제 이미지와 핵심 정보를 확인하세요. 색상과 사이즈는 옵션 선택 영역을 기준으로 주문됩니다.</p>
-        <dl>
-          <div><dt>브랜드</dt><dd id="detailBrand">-</dd></div>
-          <div><dt>카테고리</dt><dd id="detailCat1">-</dd></div>
-          <div><dt>상품 ID</dt><dd id="specProductId">-</dd></div>
-          <div><dt>Clip ID</dt><dd id="specClipId">-</dd></div>
-          <div><dt>커미션</dt><dd id="specCommission">-</dd></div>
-        </dl>
-      </aside>
+    <section class="product-detail-section" id="productDetail" aria-labelledby="detailTitle">
+      <header class="detail-section-heading">
+        <p class="kicker">PRODUCT STORY</p>
+        <h2 id="detailTitle">제품을 더 자세히 확인하세요</h2>
+        <p>숏폼에서 소개한 제품의 소재와 디테일을 확인한 뒤, 상단에서 옵션을 선택해 바로 구매할 수 있습니다.</p>
+      </header>
+      <figure class="detail-image-card">
+        <div class="detail-image-crop" aria-label="상품 상세 이미지">
+          <img id="detailImage" alt="상품 상세페이지 이미지">
+        </div>
+        <figcaption id="detailCaption"></figcaption>
+      </figure>
+      <div class="detail-support-grid">
+        <details id="transcriptSection" class="detail-accordion product-transcript" hidden open>
+          <summary>영상 속 인플루언서 설명</summary>
+          <p id="productTranscript"></p>
+        </details>
+        <details class="detail-accordion">
+          <summary>제품 기본정보</summary>
+          <dl>
+            <div><dt>브랜드</dt><dd id="detailBrand">-</dd></div>
+            <div><dt>카테고리</dt><dd id="detailCat1">-</dd></div>
+          </dl>
+        </details>
+        <details class="detail-accordion">
+          <summary>배송·교환 안내</summary>
+          <p>결제 완료 후 순차 배송됩니다. 교환·반품은 상품 수령 후 7일 이내 고객센터로 접수해 주세요.</p>
+        </details>
+      </div>
     </section>
 
     <section class="delivery-strip" id="delivery">
@@ -112,6 +137,6 @@
   </script>
   <script src="https://cdn.portone.io/v2/browser-sdk.js"></script>
   <script src="/data.js?v=20260829-product-v2"></script>
-  <script src="/product.js?v=20260829-product-v2"></script>
+  <script src="/product.js?v=20260908-options-v1"></script>
 </body>
 </html>

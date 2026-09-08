@@ -93,7 +93,7 @@ function normalizeApiProduct(apiProduct) {
 
     tag: apiProduct.tag || fallbackProduct?.tag || `${apiProduct.brand || fallbackProduct?.brand || ''} 캠페인`,
     desc: apiProduct.description || fallbackProduct?.desc || '',
-    options: ['상세페이지 기준 옵션 선택'],
+    options: Array.isArray(apiProduct.options) && apiProduct.options.length ? apiProduct.options : [],
 
     video: apiProduct.video_url || apiProduct.videoUrl || fallbackProduct?.video || '',
     detailImage: apiProduct.detail_image_url || apiProduct.detailImage || fallbackProduct?.detailImage || '',
@@ -287,6 +287,32 @@ function getOptionRowsFromForm() {
   }];
 }
 
+async function fetchAdminProductOptions(productId) {
+  if (!productId) return [];
+  const res = await adminFetch(`/api/admin/product-options?product_id=${encodeURIComponent(productId)}`);
+  const data = await res.json();
+  if (!res.ok || !data.success) {
+    throw new Error(data.detail || data.error || '상품 옵션 조회 실패');
+  }
+  return Array.isArray(data.options) ? data.options : [];
+}
+
+function addOptionPreset(optionName, values) {
+  const optionRows = $('optionRows');
+  if (!optionRows) return;
+  const placeholder = optionRows.querySelector('[data-option-value]');
+  if (placeholder && /상세페이지 기준 옵션 선택/.test(placeholder.value)) {
+    optionRows.innerHTML = '';
+  }
+  values.forEach(value => addOptionRow({
+    option_name: optionName,
+    option_value: value,
+    additional_price: 0,
+    stock: 10
+  }));
+  syncOptionTextarea();
+}
+
 function syncOptionTextarea() {
   const textarea = $('options');
   if (!textarea) return;
@@ -459,9 +485,10 @@ function getFormData() {
     price,
     benefitRate,
     commission: Math.max(0, commissionPct) / 100,
-    tag: $('tag').value.trim() || `${influencer} 착용 · ${brand} 캠페인`,
+    tag: $('tag').value.trim() || `#GRVN #${String(brand).replace(/\s+/g, '')} #14DAYDROP`,
     desc: $('desc').value.trim() || `${influencer} 인플루언서 숏폼과 연결된 ${brand} 어필리에이트 상품입니다.`,
-    options: parseOptions($('options').value) || ['상세페이지 기준 옵션 선택'],
+    options: getOptionRowsFromForm(),
+    thumbnail: $('thumbnail')?.value.trim() || $('detailImage').value.trim(),
     video: $('video').value.trim(),
     detailImage: $('detailImage').value.trim(),
     sourceUrl: $('sourceUrl').value.trim(),
@@ -485,6 +512,13 @@ function validateProduct(p) {
   if (!p.defaultInfluencer) missing.push('인플루언서명');
   if (!p.defaultAffiliate) missing.push('aff 코드');
   if (missing.length) throw new Error(`${missing.join(', ')} 입력이 필요합니다.`);
+  const options = getOptionRowsFromForm();
+  if (options.some(option => Number(option.additional_price || 0) !== 0)) {
+    throw new Error('현재 결제 안전 버전에서는 옵션 추가금액을 0원으로 입력해 주세요.');
+  }
+  if (options.some(option => /상세페이지 기준 옵션 선택/.test(option.option_value))) {
+    throw new Error('임시 옵션 문구를 삭제하고 실제 컬러·사이즈 또는 FREE 옵션을 입력해 주세요.');
+  }
 }
 function setForm(p) {
   $('editingId').value = p.slug || p.id || '';
@@ -526,6 +560,7 @@ function setForm(p) {
 
     syncOptionTextarea();
   }
+  if ($('thumbnail')) $('thumbnail').value = p.thumbnail || '';
   $('video').value = p.video || '';
   $('detailImage').value = p.detailImage || '';
   $('defaultClip').value = p.defaultClip || '';
@@ -703,11 +738,11 @@ function openLanding() {
     utm_campaign: p.campaign,
     utm_content: `${p.defaultAffiliate.toLowerCase()}_${p.defaultClip}`
   });
-  window.open(`product-landing.html?${params.toString()}`, '_blank', 'noopener,noreferrer');
+  window.open(`product-landing-v2.html?${params.toString()}`, '_blank', 'noopener,noreferrer');
 }
 function productCard(p) {
   const isAdmin = p.isAdminProduct || p.isApiProduct || readAdminProducts().some(row => row.id === p.id);
-  const link = `product-landing.html?product=${encodeURIComponent(p.id)}&aff=${encodeURIComponent(p.defaultAffiliate || 'STNDEMO')}&clip=${encodeURIComponent(p.defaultClip || 'clip')}&utm_source=instagram&utm_medium=affiliate&utm_campaign=${encodeURIComponent(p.campaign || 'grvn_shortform_commerce')}`;
+  const link = `product-landing-v2.html?product=${encodeURIComponent(p.id)}&aff=${encodeURIComponent(p.defaultAffiliate || 'STNDEMO')}&clip=${encodeURIComponent(p.defaultClip || 'clip')}&utm_source=instagram&utm_medium=affiliate&utm_campaign=${encodeURIComponent(p.campaign || 'grvn_shortform_commerce')}`;
   return `<article class="admin-product-card" data-id="${p.slug || p.id}">
     <img src="${p.detailImage || 'assets/salon_detail_page.jpg'}" alt="" loading="lazy" onerror="this.style.display='none'" />
     <div>
@@ -737,7 +772,7 @@ function renderList() {
 }
 function updatePreview() {
   const video = $('video')?.value.trim();
-  const img = $('detailImage')?.value.trim();
+  const img = $('thumbnail')?.value.trim() || $('detailImage')?.value.trim();
   if ($('videoPreview')) $('videoPreview').src = video || '';
   if ($('imagePreview')) $('imagePreview').src = img || '';
 }
@@ -817,6 +852,14 @@ function bindEvents() {
     });
   });
 
+  $('addColorOptionsBtn')?.addEventListener('click', () => {
+    addOptionPreset('컬러', ['아이보리', '블랙']);
+  });
+
+  $('addSizeOptionsBtn')?.addEventListener('click', () => {
+    addOptionPreset('사이즈', ['S', 'M', 'L']);
+  });
+
   $('syncOptionTextBtn')?.addEventListener('click', () => {
     syncOptionTextarea();
     showToast('옵션 텍스트가 반영되었습니다.');
@@ -832,20 +875,28 @@ function bindEvents() {
     syncOptionTextarea();
   });
 
-  ['video', 'detailImage'].forEach(id => $(id)?.addEventListener('input', updatePreview));
-  $('productList')?.addEventListener('click', e => {
+  ['thumbnail', 'video', 'detailImage'].forEach(id => $(id)?.addEventListener('input', updatePreview));
+  $('productList')?.addEventListener('click', async e => {
     const btn = e.target.closest('[data-edit]');
     if (!btn) return;
     const p = allProducts().find(row => {
       const key = row.slug || row.id;
       return key === btn.dataset.edit || row.id === btn.dataset.edit || row.slug === btn.dataset.edit;
     });
-    if (p) setForm({
-      ...p,
-      id: p.slug || p.id,
-      slug: p.slug || p.id,
-      supabaseId: p.supabaseId || ''
-    });
+    if (p) {
+      let options = Array.isArray(p.options) ? p.options : [];
+      if (p.supabaseId) {
+        try { options = await fetchAdminProductOptions(p.supabaseId); }
+        catch (err) { console.warn('[GRVN ADMIN] 옵션 조회 실패:', err); }
+      }
+      setForm({
+        ...p,
+        options,
+        id: p.slug || p.id,
+        slug: p.slug || p.id,
+        supabaseId: p.supabaseId || ''
+      });
+    }
   });
 }
 

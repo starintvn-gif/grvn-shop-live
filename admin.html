@@ -113,12 +113,14 @@
                 </div>
 
                 <div style="display:flex;gap:8px;flex-wrap:wrap">
-                  <button id="addOptionBtn" class="btn" type="button">옵션 추가</button>
+                  <button id="addColorOptionsBtn" class="btn" type="button">컬러 옵션 만들기</button>
+                  <button id="addSizeOptionsBtn" class="btn" type="button">사이즈 옵션 만들기</button>
+                  <button id="addOptionBtn" class="btn" type="button">직접 옵션 추가</button>
                   <button id="syncOptionTextBtn" class="btn dark" type="button">옵션 텍스트 반영</button>
                 </div>
 
                 <p class="muted" style="margin:0">
-                  옵션은 상품 저장 후 Supabase product_options 테이블에 연결됩니다. 예: 컬러/아이보리, 사이즈/M, 기본 옵션/상세페이지 기준 옵션 선택
+                  옵션은 상품 저장 후 Supabase product_options 테이블에 연결됩니다. 의류는 컬러와 사이즈를 각각 추가하세요. 현재 안전 버전에서는 추가금액을 0원으로 입력합니다.
                 </p>
               </div>
             </div>
@@ -131,6 +133,8 @@
             </div>
           </div>
           <div class="form-grid2">
+            <label class="field wide">썸네일 이미지 경로<input id="thumbnail"
+                placeholder="예: assets/thumbnails/product-name.jpg" /></label>
             <label class="field wide">숏폼 영상 경로 *<input id="video" required
                 placeholder="예: assets/salon_woojung_h264.mp4" /></label>
             <label class="field wide">상세 이미지 경로 *<input id="detailImage" required
@@ -150,7 +154,8 @@
           <div class="form-grid2">
             <label class="field">인플루언서명 *<input id="defaultInfluencer" required placeholder="예: 이우정" /></label>
             <label class="field">aff 코드 *<input id="defaultAffiliate" required placeholder="예: WOOJUNG01" /></label>
-            <label class="field wide">노출 태그<input id="tag" placeholder="예: 이우정 착용 · SALON DE SEOUL 캠페인" /></label>
+            <label class="field wide">해시태그 (최대 5개)<input id="tag" placeholder="예: #GRVN #살롱드서울 #데일리룩 #미니스커트 #14DAYDROP" /></label>
+            <p class="muted wide" style="margin:0">띄어쓰기로 구분하면 숏폼 영상 아래에 최대 5개만 표시됩니다.</p>
           </div>
 
           <div class="admin-preview-box" aria-label="미리보기">
@@ -316,7 +321,7 @@
     </div>
   </div>
   <script src="/data.js?v=20260531-admin-mvp"></script>
-  <script src="/admin.js?v=20260627-video-path-fallback-v1"></script>
+  <script src="/admin.js?v=20260908-options-v1"></script>
 </body>
 
 </html>

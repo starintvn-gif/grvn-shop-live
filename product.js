@@ -2,6 +2,9 @@ let product = getProduct(qs('product'));
 const code = getActiveCode();
 const qtyInput = document.getElementById('qtyInput');
 const optionSelect = document.getElementById('optionSelect');
+const optionGroupsEl = document.getElementById('optionGroups');
+const selectedOptionSummaryEl = document.getElementById('selectedOptionSummary');
+const selectedOptions = new Map();
 function getStaticProducts() {
   if (Array.isArray(window.STN_PRODUCTS)) {
     return window.STN_PRODUCTS;
@@ -50,7 +53,8 @@ function normalizeApiProduct(apiProduct, fallbackProduct) {
       : (fallback.options || ['FREE']),
     commission: Number(apiProduct.commission ?? fallback.commission ?? 0.3),
     benefitRate: apiProduct.benefit_rate ?? fallback.benefitRate,
-    sourceProductCode: apiProduct.source_product_code || fallback.sourceProductCode || ''
+    sourceProductCode: apiProduct.source_product_code || fallback.sourceProductCode || '',
+    tag: apiProduct.tag || fallback.tag || ''
   };
 }
 
@@ -158,22 +162,49 @@ function getOptionLabel(option) {
   return `${name}${value ? ` - ${value}` : ''}${priceText}${stockText}`;
 }
 
+function normalizeOption(option) {
+  if (typeof option === 'string') {
+    return { option_name: '옵션', option_value: option, additional_price: 0, stock: 100 };
+  }
+  return {
+    ...option,
+    option_name: String(option.option_name || option.optionName || option.name || '옵션').trim(),
+    option_value: String(option.option_value || option.optionValue || option.value || '').trim(),
+    additional_price: Number(option.additional_price || option.additionalPrice || 0),
+    stock: option.stock === undefined || option.stock === null ? 100 : Number(option.stock)
+  };
+}
+
+function getOptionGroups() {
+  const rows = Array.isArray(product?.options) ? product.options.map(normalizeOption) : [];
+  const usable = rows.filter(row => row.option_value && !/상세페이지 기준 옵션 선택/i.test(row.option_value));
+  const groups = new Map();
+  usable.forEach(row => {
+    if (!groups.has(row.option_name)) groups.set(row.option_name, []);
+    groups.get(row.option_name).push(row);
+  });
+  return groups;
+}
+
+function hasCompleteOptionSelection() {
+  const groups = getOptionGroups();
+  if (!groups.size) return true;
+  return Array.from(groups.keys()).every(name => selectedOptions.has(name));
+}
+
 function getSelectedOption() {
-  if (!optionSelect || !product) {
-    return null;
+  const groups = getOptionGroups();
+  if (!groups.size) {
+    return { option_name: '기본 옵션', option_value: 'FREE', additional_price: 0, stock: Number(product?.stock || 100) };
   }
-
-  const options = Array.isArray(product.options) && product.options.length
-    ? product.options
-    : ['FREE'];
-
-  const selectedIndex = Number(optionSelect.value);
-
-  if (Number.isInteger(selectedIndex) && options[selectedIndex]) {
-    return options[selectedIndex];
-  }
-
-  return options[0] || null;
+  if (!hasCompleteOptionSelection()) return null;
+  const choices = Array.from(selectedOptions.values());
+  return {
+    option_name: choices.map(row => row.option_name).join(' / '),
+    option_value: choices.map(row => row.option_value).join(' / '),
+    additional_price: 0,
+    stock: Math.min(...choices.map(row => Number(row.stock || 0)))
+  };
 }
 
 function getSelectedOptionAdditionalPrice() {
@@ -194,6 +225,70 @@ function getSelectedOptionText() {
   }
 
   return getOptionLabel(selected);
+}
+
+function renderOptionGroups() {
+  if (!optionGroupsEl) return;
+  selectedOptions.clear();
+  const groups = getOptionGroups();
+
+  if (!groups.size) {
+    optionGroupsEl.innerHTML = '<div class="option-empty"><b>추가 옵션이 없는 상품입니다.</b><span>수량 선택 후 바로 구매할 수 있습니다.</span></div>';
+    updateOptionState();
+    return;
+  }
+
+  optionGroupsEl.innerHTML = Array.from(groups.entries()).map(([name, rows]) => `
+    <fieldset class="option-group" data-option-group="${escapeHtml(name)}">
+      <legend><b>${escapeHtml(name)}</b><span>선택 필요</span></legend>
+      <div class="option-chips">
+        ${rows.map((row, index) => {
+          const soldOut = Number(row.stock) <= 0;
+          return `<button class="option-chip" type="button" data-option-name="${escapeHtml(name)}" data-option-index="${index}" aria-pressed="false"${soldOut ? ' disabled' : ''}>${escapeHtml(row.option_value)}${soldOut ? '<small>품절</small>' : ''}</button>`;
+        }).join('')}
+      </div>
+    </fieldset>`).join('');
+
+  optionGroupsEl.onclick = event => {
+    const button = event.target.closest('.option-chip');
+    if (!button || button.disabled) return;
+    const name = button.dataset.optionName;
+    const row = groups.get(name)?.[Number(button.dataset.optionIndex)];
+    if (!row) return;
+    selectedOptions.set(name, row);
+    button.closest('.option-group').querySelectorAll('.option-chip').forEach(chip => {
+      const active = chip === button;
+      chip.classList.toggle('selected', active);
+      chip.setAttribute('aria-pressed', String(active));
+    });
+    const status = button.closest('.option-group').querySelector('legend span');
+    if (status) status.textContent = row.option_value;
+    updateOptionState();
+  };
+  updateOptionState();
+}
+
+function updateOptionState() {
+  const checkout = document.getElementById('checkoutBtn');
+  const complete = hasCompleteOptionSelection();
+  const selected = getSelectedOption();
+  if (selectedOptionSummaryEl) {
+    selectedOptionSummaryEl.textContent = complete
+      ? `선택: ${selected?.option_value || 'FREE'}`
+      : `${Array.from(getOptionGroups().keys()).filter(name => !selectedOptions.has(name)).join(' · ')} 옵션을 선택해 주세요.`;
+  }
+  if (checkout) {
+    checkout.disabled = !complete;
+    checkout.textContent = complete ? '선택한 옵션으로 바로 구매' : '옵션을 선택해 주세요';
+  }
+  updateSummary();
+}
+
+function renderHashtags() {
+  const container = document.getElementById('productHashtags');
+  if (!container) return;
+  const tags = String(product?.tag || '').match(/#[^\s#]+/g) || [];
+  container.innerHTML = tags.slice(0, 5).map(tag => `<span>${escapeHtml(tag)}</span>`).join('');
 }
 
 function renderProductPage(product) {
@@ -270,6 +365,9 @@ function renderProductPage(product) {
     }).join('');
   }
 
+  renderOptionGroups();
+  renderHashtags();
+
   const detailCaption = document.getElementById('detailCaption');
   if (detailCaption) {
     detailCaption.textContent = `${product.defaultInfluencer || '인플루언서'} 영상 속 LOOK 상품입니다. ${product.name} 상세 이미지가 GRVN 내부에 직접 표시되며, 옵션 선택 후 이 페이지에서 바로 결제합니다.`;
@@ -283,8 +381,8 @@ function updateSummary() {
   if (!product) return;
 
   const qty = Math.max(1, Number(qtyInput.value) || 1);
-  const optionAdditionalPrice = getSelectedOptionAdditionalPrice();
-  const unitPrice = Number(product.price || 0) + optionAdditionalPrice;
+  /* 서버 결제금액과 일치시키기 위해 옵션 추가금액은 현재 계산하지 않습니다. */
+  const unitPrice = Number(product.price || 0);
   const subtotal = unitPrice * qty;
 
   const subtotalEl = document.getElementById('subtotal');
@@ -371,6 +469,11 @@ async function requestPortOnePayment() {
 
     const qty = Math.max(1, Number(qtyInput.value) || 1);
     const selectedOption = getSelectedOption();
+    if (!selectedOption || !hasCompleteOptionSelection()) {
+      toast('필수 옵션을 모두 선택해 주세요.');
+      updateOptionState();
+      return;
+    }
 
     /*
       1) GRVN 서버에서 pending 주문 먼저 생성
@@ -490,8 +593,7 @@ async function requestPortOnePayment() {
 
   } finally {
     if (checkoutBtn) {
-      checkoutBtn.disabled = false;
-      checkoutBtn.textContent = '구매하기';
+      updateOptionState();
     }
   }
 }
