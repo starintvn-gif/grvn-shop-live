@@ -2829,25 +2829,12 @@ export default {
             return adminLogin(request, env);
         }
 
-        if (url.pathname === "/debug/env") {
-            return jsonResponse(request, env, {
-                has_SUPABASE_URL: !!env.SUPABASE_URL,
-                supabase_url: env.SUPABASE_URL || null,
-                has_SERVICE_ROLE_KEY: !!env.SUPABASE_SERVICE_ROLE_KEY,
-                service_key_prefix: env.SUPABASE_SERVICE_ROLE_KEY
-                    ? env.SUPABASE_SERVICE_ROLE_KEY.slice(0, 12) + "..."
-                    : null,
-                allowed_origin: env.ALLOWED_ORIGIN || null
-            });
-        }
-
         if (url.pathname === "/") {
             return jsonResponse(request, env, {
                 service: "grvn-api",
                 version: "admin-auth-cancel-v1",
                 available: [
                     "/health",
-                    "/debug/env",
                     "POST /api/events",
                     "GET /api/products",
                     "GET /api/products/:slug",
