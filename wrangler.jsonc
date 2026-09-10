@@ -1,5 +1,12 @@
 {
   "name": "grvn-api",
   "compatibility_date": "2026-06-24",
-  "main": "worker.js"
+  "main": "worker.js",
+  "routes": [
+    {
+      "pattern": "api.grvn.shop",
+      "zone_name": "grvn.shop",
+      "custom_domain": true
+    }
+  ]
 }
